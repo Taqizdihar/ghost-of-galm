@@ -220,7 +220,7 @@ export class FlightHUD {
           ctx.stroke();
         }
         ctx.globalAlpha = 0.9;
-        label(ctx, locked ? 'LOCK' : 'TGT', tx + r + 9, ty - 15, 'left', 10);
+        label(ctx, locked ? 'LOCK' : state.acquiring ? 'ACQ' : 'TGT · L', tx + r + 9, ty - 15, 'left', 10);
         label(ctx, target.name || 'F-15C', tx + r + 9, ty + 1, 'left', 11);
         label(ctx, `${((target.distance || 0) / 1000).toFixed(2)} KM`, tx + r + 9, ty + 17, 'left', 10);
         if (locked && state.mode === 'playing') {
@@ -235,6 +235,7 @@ export class FlightHUD {
 
     ctx.strokeStyle = GREEN;
     ctx.fillStyle = GREEN;
+    if (state.rearView) label(ctx, 'REAR VIEW · HOLD V', cx, mobile ? 100 : 174, 'center', 11);
     if (state.warning && state.mode === 'playing') {
       ctx.globalAlpha = 0.75 + Math.sin((state.time || 0) * 7) * 0.2;
       ctx.fillStyle = AMBER;
@@ -283,6 +284,15 @@ export class FlightHUD {
   }
 }
 
+export function radarPosition(x, z, heading, extent = 68) {
+  const cos = Math.cos(heading), sin = Math.sin(heading);
+  let rx = (x * cos + z * sin) / 8000 * 75;
+  let ry = (z * cos - x * sin) / 8000 * 75;
+  const edge = Math.max(Math.abs(rx), Math.abs(ry));
+  if (edge > extent) { rx *= extent / edge; ry *= extent / edge; }
+  return { x: rx, y: ry };
+}
+
 export function drawRadar(canvas, state) {
   const ctx = canvas.getContext('2d');
   const size = 176;
@@ -296,17 +306,17 @@ export function drawRadar(canvas, state) {
   ctx.strokeStyle = DIM;
   ctx.fillStyle = 'rgba(8,31,30,.15)';
   ctx.beginPath();
-  ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+  ctx.rect(cx - radius, cy - radius, radius * 2, radius * 2);
   ctx.fill();
   ctx.stroke();
   ctx.save();
   ctx.beginPath();
-  ctx.arc(cx, cy, radius - 1, 0, Math.PI * 2);
+  ctx.rect(cx - radius + 1, cy - radius + 1, radius * 2 - 2, radius * 2 - 2);
   ctx.clip();
   ctx.strokeStyle = 'rgba(165,245,188,.15)';
   for (const ring of [25, 50]) {
     ctx.beginPath();
-    ctx.arc(cx, cy, ring, 0, Math.PI * 2);
+    ctx.rect(cx - ring, cy - ring, ring * 2, ring * 2);
     ctx.stroke();
   }
   line(ctx, cx - radius, cy, cx + radius, cy);
@@ -315,22 +325,16 @@ export function drawRadar(canvas, state) {
   for (let i = 0; i < 22; i++) {
     const angle = sweep - i * 0.024;
     ctx.strokeStyle = `rgba(165,245,188,${(1 - i / 22) * 0.11})`;
-    line(ctx, cx, cy, cx + Math.cos(angle) * radius, cy + Math.sin(angle) * radius);
+    const edge = radius / Math.max(Math.abs(Math.cos(angle)), Math.abs(Math.sin(angle)));
+    line(ctx, cx, cy, cx + Math.cos(angle) * edge, cy + Math.sin(angle) * edge);
   }
   ctx.strokeStyle = 'rgba(165,245,188,.4)';
   line(ctx, cx, cy, cx + Math.cos(sweep) * radius, cy + Math.sin(sweep) * radius);
   const heading = state.playerHeading ?? (state.heading || 0) * DEG;
   const cos = Math.cos(heading);
   const sin = Math.sin(heading);
-  const range = 8000;
   for (const enemy of state.enemies || []) {
-    let x = ((enemy.x || 0) * cos + (enemy.z || 0) * sin) / range * radius;
-    let y = ((enemy.z || 0) * cos - (enemy.x || 0) * sin) / range * radius;
-    const distance = Math.hypot(x, y);
-    if (distance > radius - 7) {
-      x *= (radius - 7) / distance;
-      y *= (radius - 7) / distance;
-    }
+    const { x, y } = radarPosition(enemy.x || 0, enemy.z || 0, heading);
     ctx.strokeStyle = enemy.selected ? AMBER : GREEN;
     ctx.fillStyle = enemy.selected ? AMBER : GREEN;
     ctx.globalAlpha = enemy.selected ? 1 : 0.76;
@@ -338,6 +342,13 @@ export function drawRadar(canvas, state) {
       ctx.strokeRect(cx + x - 5, cy + y - 5, 10, 10);
     }
     ctx.fillRect(cx + x - 1.5, cy + y - 1.5, 3, 3);
+  }
+  if (state.wingman) {
+    const { x, y } = radarPosition(state.wingman.x, state.wingman.z, heading);
+    ctx.strokeStyle = '#83e5ff'; ctx.fillStyle = '#83e5ff'; ctx.globalAlpha = 1;
+    ctx.beginPath(); ctx.moveTo(cx + x, cy + y - 5); ctx.lineTo(cx + x + 5, cy + y);
+    ctx.lineTo(cx + x, cy + y + 5); ctx.lineTo(cx + x - 5, cy + y); ctx.closePath(); ctx.stroke();
+    label(ctx, '2', cx + x + 8, cy + y - 6, 'left', 8);
   }
   ctx.restore();
   ctx.globalAlpha = 0.85;
@@ -350,7 +361,8 @@ export function drawRadar(canvas, state) {
   ctx.closePath();
   ctx.fill();
   ctx.globalAlpha = 0.7;
-  label(ctx, 'N', cx - sin * 82, cy - cos * 82, 'center', 9);
+  const northEdge = 82 / Math.max(Math.abs(sin), Math.abs(cos));
+  label(ctx, 'N', cx - sin * northEdge, cy - cos * northEdge, 'center', 9);
   label(ctx, '8 KM', cx, 172, 'center', 8);
   ctx.globalAlpha = 1;
 }

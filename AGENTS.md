@@ -107,6 +107,17 @@ src/
 ├── hud.js
 ├── audio.js
 └── style.css
+```
+
+M1–M3 are completed. The baseline also includes `src/game/state.js`,
+`src/game/round-director.js`, `src/game/encounters.js`,
+`src/combat/enemies.js`, `src/ui/intermission.js`, and lightweight Node tests.
+RoundDirector owns progression, score, kill ownership and detached snapshots.
+
+M4–M5 add `src/aircraft/{catalog,assets,attachments,wingman}.js`,
+`src/combat/{damage,manual-lock}.js`, and `src/ui/hangar.js`. The catalog owns
+airframe stats/transforms/hardpoints; the wingman owns local AI/HP/weapon timers.
+Main integrates shared projectiles/damage with the existing RoundDirector.
 
 Other important project files include:
 
@@ -244,27 +255,15 @@ fullscreen handling.
 
 Existing working behavior should not be removed merely to simplify refactoring.
 
-6. Current Mission Limitation
+6. Current Mission Baseline
 
-The current game is still based on a single fixed encounter.
+M1–M3 implement endless rounds with data-driven encounter selection.
 
-At the current baseline:
-
-approximately six enemies are spawned,
-enemy types are currently hard-coded,
-enemy positions are mostly hard-coded,
-winning is effectively tied to destroying the fixed group,
-after mission completion the player can repeat the sortie,
-the game does not yet have persistent endless rounds,
-there is no wingman entity yet,
-there is no hangar workflow yet,
-there is no conversational AI yet.
-
-Some parts of the current code assume a fixed enemy count of six.
-
-Those assumptions must gradually be removed.
-
-A completed round must eventually be determined by whether all enemies in the current encounter have been destroyed, not by a hard-coded kill number.
+The initial Silent Tide encounter has six aircraft; subsequent encounters have
+variable compositions. Round completion checks living enemies independently of
+kill ownership. Score, aircraft condition and ammunition persist between rounds.
+Pause is separate from progression. Elite Flight and Heavy Contact are stat-only
+prototypes, not final Elite/Boss implementations. There is no conversational AI.
 
 7. Long-Term Game Loop
 
@@ -301,9 +300,9 @@ Boss fights and elite encounters are special encounter choices inside the endles
 
 8. Intended Game State Model
 
-The current simple state model should gradually evolve toward a clearer state machine.
+The current run state machine uses the following phases, with pause separate.
 
-Desired high-level phases include:
+Current high-level phases include:
 
 READY
 COMBAT
@@ -539,13 +538,29 @@ loading optimization,
 visual polish.
 10. Current Active Development Scope
 
-Unless a newer instruction explicitly overrides this section, the current active implementation scope is:
+Completed baseline:
 
 M1 — Architecture Foundation
 M2 — Endless Round Core
 M3 — Encounter Selection
 
-Do not implement M4 through M10 yet.
+Current active implementation scope:
+
+M4 — Wingman Flight and Combat AI
+M5 — Hangar and Aircraft Selection
+
+Also authorized: square 8 km tactical radar, manual missile lock (L and touch
+LOCK), and hold-to-view-rear (V). TAB remains hostile target selection only.
+The player aircraft remains the existing procedural F-15C.
+
+M4 and scoped M5 are implemented and verified; see `docs/m4-m5-validation.md`.
+The active scope remains their maintenance/tuning, not automatic M6+ development.
+M5 intentionally has one fixed player aircraft, two selectable wingman aircraft,
+and provisional full-health replacement when changing to a different wingman.
+
+Do not implement M6–M10, final Elite/Boss behavior, physical landing, or additional
+player aircraft. `boss_air-destroyer.glb` is a future special-enemy/Boss asset for
+M9: leave it untouched in the repository root; do not move, rename, modify or load it.
 
 However, architecture created during M1–M3 should avoid making M4–M10 unnecessarily difficult.
 
@@ -561,7 +576,7 @@ dynamic encounter types.
 
 The agent may create interfaces or extensible data structures that help later milestones, but must not prematurely implement future systems.
 
-11. M1–M3 Success Criteria
+11. Historical M1–M3 Success Criteria (completed baseline)
 
 The first development batch should be considered successful when the following behavior works reliably:
 
@@ -793,43 +808,44 @@ Do not expose unnecessary internal implementation details to external AI service
 
 18. Wingman Aircraft Assets
 
-The future wingman is expected to have two selectable aircraft models.
+Authoritative M4–M5 definitions (supersede earlier approximate asset estimates):
 
-These models are expected to be GLB/glTF assets.
+| ID / asset | Display name | Max HP | Missile | Cannon | Special |
+| --- | --- | --- | --- | --- | --- |
+| wingman-01 / wingman-01.glb | The Ghost of Galm (default) | 1500 | 30 damage | 3 damage/bullet | None |
+| wingman-02 / wingman-02.glb | Pixy's Prototype | 2000 | 30 damage | 3 damage/bullet | Linear Laser: 50 damage/sec, 5 sec duration, 120 sec cooldown |
 
-Current known approximate model information:
+These two wingman GLBs now reside in `public/assets/aircraft/wingman/`. Use the existing
+Three.js GLTFLoader, centralized normalization and wrapper-local hardpoints.
+Do not destructively edit geometry. Preserve player/enemy combat units; document
+any centralized adapter used for wingman damage. A visible procedural fallback
+and clear console error must handle loading failure.
 
-Wingman Aircraft Model A
+Wingman HP/destruction persist between rounds. Opening the hangar never repairs
+either aircraft. Intentionally switching to a different wingman aircraft may
+initialize that replacement at full HP; this is provisional balancing behavior.
 
-Approximate characteristics:
+Inspected supplied assets: wingman-01 is 212,896 bytes / 4,082 triangles;
+wingman-02 is 261,968 bytes / 29,414 triangles. Both contain Draco-compressed
+geometry and embedded textures. Load through GLTFLoader with the existing
+Three.js Draco decoder bundled locally. No new dependency or CDN is needed.
 
-File size: ~6.6 MB
-Triangles: ~4,082
+Normalized wrapper axes are +X right, +Y up, -Z forward. Both models use a
+180-degree yaw correction, bounds-centering, and lengths of 24 m / 27 m.
+The GLB bytes remain unchanged. Pixy's alternate deployed gear/refueling nodes
+are hidden at runtime. Only the selected model is loaded and replaced models
+are disposed. All effects use configured local hardpoints.
 
-The geometry is very lightweight.
+`src/combat/damage.js` defines 10 wingman HP per existing combat unit:
+30 missile damage -> 3 enemy HP, 3 cannon damage -> 0.3 enemy HP,
+50 laser damage/sec -> 5 enemy HP/sec, 24 legacy threat damage -> 240 wingman HP.
+Player/enemy HP and player weapon damage are unchanged.
 
-The comparatively larger file size may primarily come from textures/material assets rather than polygon count.
-
-Wingman Aircraft Model B
-
-Approximate characteristics:
-
-File size: ~255 KB
-Triangles: ~29,414
-
-The triangle count is still reasonable for a single active wingman aircraft in a Three.js game.
-
-The small file size suggests efficient asset storage and/or minimal texture overhead.
-
-Additional information about materials, textures, texture resolution, nodes, animations, and draw calls may be provided later.
-
-Do not assume either model must be recreated procedurally.
-
-Current preferred strategy is:
-
-use optimized GLB directly
-
-unless profiling later demonstrates a real problem.
+GALM 2 uses FORMATION / ENGAGE / EVADE / REGROUP / DESTROYED local states.
+Enemies alternate timed threats between nearby friendlies. The laser uses
+forward ray/sphere intersection, hits the nearest valid hostile, runs for at
+most five seconds and starts its 120-second cooldown at activation. Timers
+freeze outside unpaused combat. Destruction and combat end stop the beam.
 
 19. GLB and Procedural Aircraft Coexistence
 
@@ -1172,6 +1188,13 @@ Do not hard-code the interface around exactly three choices if a flexible implem
 
 34. Hangar UX Direction
 
+Current scoped M5: preflight wingman selection and an intermission Flight
+Operations modal. The chosen next encounter survives opening/cancelling hangar.
+Score, player condition/ammunition, and unchanged wingman HP/destruction/timers
+persist. Choosing a different wingman supplies a full-health replacement with
+fresh weapon timers. This is provisional; no economy or physical landing exists.
+GALM 1 is displayed as the fixed/current F-15C. Conversation remains future work.
+
 The hangar should eventually allow:
 
 player aircraft selection,
@@ -1218,6 +1241,8 @@ Tab
 1 / 2
 F
 C
+L — request/cancel missile lock; touch LOCK provides the same action
+V — hold rear view in Chase or Cockpit; release restores the selected view
 Esc / P
 H
 
@@ -1499,11 +1524,9 @@ If project architecture has materially changed, update this document only when r
 
 52. Current Priority
 
-The immediate development priority is:
-
-M1 — Architecture Foundation
-M2 — Endless Round Core
-M3 — Encounter Selection
+The immediate development priority is M4–M5 and their runtime validation.
+M1 — Architecture Foundation, M2 — Endless Round Core, and M3 — Encounter
+Selection are completed and must remain working.
 
 The target outcome is a stable endless-round foundation that preserves the quality of the current flight prototype and prepares the project for future wingman gameplay, hangar selection, conversational AI, and voice systems.
 

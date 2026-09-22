@@ -14,6 +14,21 @@ function setup() {
   return { run, director, get enemies() { return enemies; } };
 }
 
+test('hangar suspends progression and returns to its entry phase without repairing or resetting the run', () => {
+  const game = setup();
+  assert.equal(game.director.enterHangar(), true); assert.equal(game.run.phase, Phase.HANGAR);
+  assert.equal(game.director.startRun(), false); game.director.leaveHangar();
+  game.director.startRun(); assert.equal(game.director.enterHangar(), false);
+  for (const enemy of game.enemies) game.director.recordDestruction(enemy, 'wingman');
+  game.director.checkRoundComplete(); game.director.update(1);
+  const before = game.director.getSnapshot(); game.director.enterHangar(); game.director.update(100);
+  assert.equal(game.run.score, before.score); assert.equal(game.run.round, before.round);
+  assert.equal(game.run.elapsed, before.elapsed); assert.equal(game.director.nextRound('border_patrol'), false);
+  game.director.leaveHangar(); assert.equal(game.run.phase, Phase.INTERMISSION);
+  game.director.nextRound('border_patrol'); assert.equal(game.run.round, 2);
+  assert.equal(game.run.killsBySource.wingman, 6);
+});
+
 test('100 consecutive rounds retain score and total ownership, with variable compositions', () => {
   const game = setup();
   game.director.startRun();

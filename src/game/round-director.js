@@ -20,6 +20,16 @@ export function createRoundDirector(run, spawnEncounter) {
   }
 
   return {
+    enterHangar() {
+      if (![Phase.READY, Phase.GAME_OVER, Phase.INTERMISSION].includes(run.phase)) return false;
+      run.hangarReturnPhase = run.phase; run.phase = Phase.HANGAR; run.paused = false;
+      return true;
+    },
+    leaveHangar() {
+      if (run.phase !== Phase.HANGAR) return false;
+      run.phase = run.hangarReturnPhase; run.hangarReturnPhase = null;
+      return true;
+    },
     startRun() {
       if (![Phase.READY, Phase.GAME_OVER].includes(run.phase)) return false;
       Object.assign(run, createRunState());

@@ -7,6 +7,13 @@ import { createRoundDirector } from './game/round-director.js';
 import { DEFAULT_ENCOUNTER_ID, getEncounter, enemyCount } from './game/encounters.js';
 import { spawnEncounter, disposeEnemies } from './combat/enemies.js';
 import { renderIntermission } from './ui/intermission.js';
+import { renderHangar } from './ui/hangar.js';
+import { DEFAULT_WINGMAN_ID, getWingmanAircraft, playerAircraft } from './aircraft/catalog.js';
+import { loadAircraft, disposeAircraft } from './aircraft/assets.js';
+import { createWingman } from './aircraft/wingman.js';
+import { hardpointWorld } from './aircraft/attachments.js';
+import { toWingmanDamage } from './combat/damage.js';
+import { createManualLock } from './combat/manual-lock.js';
 import './style.css';
 
 const icon = (name, size = 18) => {
@@ -54,14 +61,14 @@ document.querySelector('#app').innerHTML = `
       <div class="sector-info"><span>AO <b>B7</b></span><div class="sector-rule"></div><span>VISIBILITY <b>24 KM</b></span><span>WIND <b>270° / 08 KT</b></span></div>
       <div class="camera-switch" role="group" aria-label="Camera view"><button id="chase-btn" class="selected" aria-pressed="true">CHASE</button><button id="cockpit-btn" aria-pressed="false">COCKPIT</button><kbd>C</kbd></div>
       <div class="warning" id="warning" aria-live="polite"></div>
-      <section class="radar-panel" aria-label="Tactical radar"><div class="instrument-title">TAC / RADAR <span>8 KM</span></div><div class="radar-wrap"><canvas id="radar" width="176" height="176" aria-label="Enemy positions"></canvas><span class="radar-n">N</span></div><div class="radar-caption"><span class="status-dot"></span> GALM 1 <span>IFF ACTIVE</span></div></section>
+      <section class="radar-panel" aria-label="Tactical radar"><div class="instrument-title">TAC / RADAR <span>8 KM</span></div><div class="radar-wrap"><canvas id="radar" width="176" height="176" aria-label="Friendly and hostile positions"></canvas></div><div class="radar-caption"><span class="status-dot"></span> GALM 1 <span>IFF / G2 CYAN</span></div></section>
       <div class="comms" id="comms"><div class="comms-speaker">${icon('radio', 15)} <span>AWACS <b>EAGLE EYE</b></span><span class="comms-bars"><i></i><i></i><i></i><i></i><i></i></span></div><p id="radio-text">“The coast is clear. The sky is another story.”</p><span class="comms-frequency">CH 01 &nbsp; / &nbsp; 243.00 MHz</span></div>
       <section class="weapons-panel" aria-label="Aircraft and weapons"><div class="instrument-title">F–15C EAGLE <span>GALM 1</span></div><div class="aircraft-status"><span class="aircraft-silhouette">${icon('plane', 56)}</span><div><div class="airframe-label">AIRFRAME <b id="health-value">100<span>%</span></b></div><div class="health-track"><span id="health-bar"></span></div><span class="airframe-state" id="airframe-state">ALL SYSTEMS NOMINAL</span></div></div><button class="weapon-row selected" id="missile-btn"><span class="weapon-symbol">↗</span><span>MSL <small>STANDARD MISSILE</small></span><strong id="missile-count">32</strong><kbd>1</kbd></button><button class="weapon-row" id="gun-btn"><span class="weapon-symbol gun-symbol">≡</span><span>GUN <small>20 MM CANNON</small></span><strong>∞</strong><kbd>2</kbd></button><div class="flares-row"><span>FLARES <b id="flare-count">06</b></span><button id="flare-btn" title="Deploy flares">DEPLOY <kbd>F</kbd></button></div></section>
-      <div class="flight-data"><span><i class="status-dot"></i> FLIGHT ASSIST <b>ON</b></span><span id="g-force">1.0 G</span><span id="mach">M 0.72</span></div>
-      <div class="touch-controls"><div class="touch-steering"><button data-key="ArrowUp" aria-label="Pitch up">↑</button><button data-key="ArrowLeft" aria-label="Turn left">←</button><button data-key="ArrowDown" aria-label="Pitch down">↓</button><button data-key="ArrowRight" aria-label="Turn right">→</button></div><button id="touch-fire">FIRE</button><button id="touch-target">TARGET</button></div>
+      <div id="wingman-status" class="wingman-status" role="status">GALM 2 / AWAITING SELECTION</div><div class="flight-data"><span><i class="status-dot"></i> FLIGHT ASSIST <b>ON</b></span><span id="g-force">1.0 G</span><span id="mach">M 0.72</span></div>
+      <div class="touch-controls"><div class="touch-steering"><button data-key="ArrowUp" aria-label="Pitch up">↑</button><button data-key="ArrowLeft" aria-label="Turn left">←</button><button data-key="ArrowDown" aria-label="Pitch down">↓</button><button data-key="ArrowRight" aria-label="Turn right">→</button></div><button id="touch-fire">FIRE</button><button id="touch-target">TARGET</button><button id="touch-lock" aria-label="Request or cancel missile lock" aria-pressed="false">LOCK</button></div>
       <div class="loading-cover" id="loading-cover"><span class="brand-mark">${icon('plane', 42)}</span><span>PREPARING YOUR SORTIE</span><div class="loading-track"><i></i></div></div>
     </section>
-    <footer class="control-bar"><div class="controls-list"><span><kbd>W</kbd><kbd>S</kbd> PITCH</span><span><kbd>A</kbd><kbd>D</kbd> ROLL</span><span><kbd>SHIFT</kbd> THROTTLE</span><span><kbd>SPACE</kbd> FIRE</span><span><kbd>TAB</kbd> TARGET</span><span><kbd>C</kbd> CAMERA</span></div><button id="all-controls">ALL CONTROLS ${icon('chevron', 12)}</button><span class="footer-credit">AN UNOFFICIAL FAN EXPERIENCE</span></footer>
+    <footer class="control-bar"><div class="controls-list"><span><kbd>W</kbd><kbd>S</kbd> PITCH</span><span><kbd>A</kbd><kbd>D</kbd> ROLL</span><span><kbd>SHIFT</kbd> THROTTLE</span><span><kbd>SPACE</kbd> FIRE</span><span><kbd>TAB</kbd> TARGET</span><span><kbd>L</kbd> LOCK</span><span><kbd>V</kbd> REAR</span><span><kbd>C</kbd> CAMERA</span></div><button id="all-controls">ALL CONTROLS ${icon('chevron', 12)}</button><span class="footer-credit">AN UNOFFICIAL FAN EXPERIENCE</span></footer>
   </main>
   <dialog id="game-dialog" aria-labelledby="dialog-title"><div class="dialog-top"><span class="eyebrow">GALM SQUADRON / FLIGHT OPERATIONS</span><button class="icon-button" id="dialog-close" aria-label="Close dialog">${icon('close')}</button></div><div id="dialog-content"></div></dialog>
 `;
@@ -95,7 +102,12 @@ const player = { position: new THREE.Vector3(0, 460, 1400), heading: 0, pitch: 0
 const run = createRunState();
 const mode = () => presentationMode(run);
 let view = 'chase', weapon = 'MSL', selectedId = 0;
-let lockTime = 0, fireCooldown = 0, gunCooldown = 0, threatTime = 0, incoming = 0, flareProtect = 0, radioUntil = 0, currentWarning = '', lastUiTime = 0;
+const manualLock = createManualLock();
+let fireCooldown = 0, gunCooldown = 0, threatTime = 0, incoming = 0, flareProtect = 0, radioUntil = 0, currentWarning = '', lastUiTime = 0;
+let wingman = null, selectedWingmanId = DEFAULT_WINGMAN_ID, pendingEncounterId = DEFAULT_ENCOUNTER_ID;
+let preparingAircraft = false, incomingWingman = 0, threatNumber = 0, wasRearView = false;
+const rearView = () => mode() === 'playing' && keys.has('v');
+const playerAsset = { mesh: playerJet, definition: playerAircraft };
 let width = 0, height = 0, visualTime = 0, lastTime = performance.now(), activeDialog = '', resumeAfterDialog = false;
 let enemies = [], projectiles = [], particles = [];
 const forward = new THREE.Vector3(), temp = new THREE.Vector3(), desiredCamera = new THREE.Vector3(), lookAt = new THREE.Vector3();
@@ -127,14 +139,16 @@ function targetInfo() {
   const distance = delta.length();
   const dot = delta.normalize().dot(direction());
   const p = e.mesh.position.clone().project(camera);
-  return { x: (p.x + 1) * width / 2, y: (1 - p.y) * height / 2, distance, name: e.name, behind: dot < 0, dot, enemy: e };
+  const cameraDot = delta.dot(camera.getWorldDirection(new THREE.Vector3()));
+  return { x: (p.x + 1) * width / 2, y: (1 - p.y) * height / 2, distance, name: e.name, behind: cameraDot < 0, dot, enemy: e };
 }
 function cycleTarget() {
+  if (mode() !== 'playing') return;
   const living = enemies.filter((e) => e.alive);
   if (!living.length) return;
   const index = living.findIndex((e) => e.id === selectedId);
   selectedId = living[(index + 1) % living.length].id;
-  lockTime = 0;
+  manualLock.reset();
   audio.play('click');
 }
 function selectBestTarget() {
@@ -144,22 +158,62 @@ function selectBestTarget() {
   const candidates = ahead.length ? ahead : alive;
   candidates.sort((a, b) => a.mesh.position.distanceToSquared(player.position) - b.mesh.position.distanceToSquared(player.position));
   if (candidates[0]) selectedId = candidates[0].id;
-  lockTime = 0;
+  manualLock.reset();
+}
+function toggleLock() {
+  if (mode() !== 'playing') return;
+  manualLock.toggle(selectedTarget()); audio.play('click');
 }
 function say(text, seconds = 8) { $('radio-text').textContent = `“${text}”`; radioUntil = run.elapsed + seconds; }
 
-async function startSortie() {
+function startSortie() {
   if (run.phase === Phase.INTERMISSION) { showDialog('intermission'); return; }
   if (![Phase.READY, Phase.GAME_OVER].includes(run.phase)) return;
-  closeDialog(false);
-  resetGame();
-  director.startRun();
-  prepareRound();
-  await audio.start(); audio.setMuted(muted);
+  selectedWingmanId = DEFAULT_WINGMAN_ID;
+  openHangar();
+}
+function openHangar(encounterId = pendingEncounterId) {
+  pendingEncounterId = encounterId;
+  if (!director.enterHangar()) return;
+  showDialog('hangar'); updateUI();
+}
+async function launchFromHangar(aircraftId) {
+  if (preparingAircraft || run.phase !== Phase.HANGAR) return;
+  preparingAircraft = true; $('dialog-close').disabled = true;
+  try {
+    const newRun = run.hangarReturnPhase !== Phase.INTERMISSION;
+    const replacement = newRun || !wingman || wingman.definition.id !== aircraftId;
+    const asset = replacement ? await loadAircraft(getWingmanAircraft(aircraftId)) : null;
+    director.leaveHangar(); closeDialog(false);
+    if (newRun) resetGame();
+    if (asset) {
+      removeWingman();
+      wingman = createWingman(asset, scene, player, world.terrainHeight, {
+        hasMissile: target => projectiles.some(p => p.source === 'wingman' && p.target === target),
+        fireMissile: (origin, forward, target, damage) => spawnMissile(origin, forward, target, damage, 'wingman'),
+        fireCannon: (origin, forward) => spawnParticle(origin, forward.clone().multiplyScalar(1300), 0x8fe8ff, .55, .55),
+        damageEnemy,
+        laserHit: origin => spawnParticle(origin, new THREE.Vector3(0, 2, 0), 0xffb5a1, .25, 2),
+        onDestroyed: origin => {
+          incomingWingman = 0;
+          for (let i = 0; i < 18; i++) spawnParticle(origin.clone(), new THREE.Vector3((Math.random()-.5)*65, Math.random()*35, (Math.random()-.5)*65), 0xffa35b, 2, 2);
+          say('Galm 2 is down. Galm 1, your sortie continues.', 9); audio.play('destroy');
+        },
+      });
+    }
+    selectedWingmanId = aircraftId;
+    if (newRun) { director.startRun(); prepareRound(); }
+    else continueSortie(pendingEncounterId);
+    if (wingman.assetStatus === 'fallback') say('GALM 2 model unavailable. Procedural substitute active.', 12);
+    await audio.start(); audio.setMuted(muted);
+  } finally { preparingAircraft = false; $('dialog-close').disabled = false; }
+}
+function removeWingman() {
+  if (wingman) { wingman.dispose(); disposeAircraft(wingman.mesh); wingman = null; }
 }
 function prepareRound() {
-  keys.clear(); selectedId = enemies[0]?.id ?? 0; lockTime = 0;
-  threatTime = 0; incoming = 0; currentWarning = '';
+  keys.clear(); selectedId = enemies[0]?.id ?? 0; manualLock.reset();
+  threatTime = 0; incoming = 0; incomingWingman = 0; currentWarning = '';
   area.classList.add('is-playing');
   $('launch-btn').hidden = true;
   $('flight-active').hidden = false;
@@ -180,8 +234,13 @@ function clearCombatEffects() {
 }
 function resetGame() {
   player.position.set(0, 460, 1400); Object.assign(player, { heading: 0, pitch: 0, roll: 0, speed: 880, throttle: .64, health: 100, missiles: 32, flares: 6 });
-  selectedId = 0; lockTime = 0; threatTime = 0; incoming = 0; flareProtect = 0; fireCooldown = 0; gunCooldown = 0; currentWarning = '';
+  selectedId = 0; manualLock.reset(); threatTime = 0; threatNumber = 0; incoming = 0; incomingWingman = 0; flareProtect = 0; fireCooldown = 0; gunCooldown = 0; currentWarning = '';
+  removeWingman();
   clearCombatEffects(); director.reset(); setWeapon('MSL'); setView('chase'); keys.clear();
+  pendingEncounterId = DEFAULT_ENCOUNTER_ID;
+  area.classList.remove('is-playing');
+  $('launch-btn').hidden = false; $('launch-btn').innerHTML = `<span>LAUNCH SORTIE</span>${icon('chevron', 18)}`;
+  $('flight-active').hidden = true;
 }
 function setWeapon(next) {
   weapon = next;
@@ -212,12 +271,11 @@ function fire() {
   if (weapon === 'MSL') {
     if (fireCooldown > 0 || player.missiles <= 0) return;
     const info = targetInfo();
-    if (!info || lockTime < .65) { say('Bring the target into your sights. Wait for a lock.', 4); fireCooldown = .6; return; }
-    if (projectiles.some(projectile => projectile.target === info.enemy && projectile.target.alive)) return;
+    if (!info || !manualLock.getSnapshot().locked || info.distance >= 8200 || info.dot <= .974) { say('Press L / LOCK to request lock. Keep the target in your sights.', 4); fireCooldown = .6; return; }
+    if (projectiles.some(projectile => projectile.source === 'player' && projectile.target === info.enemy && projectile.target.alive)) return;
     player.missiles--; fireCooldown = .9; audio.play('missile');
-    const mesh = new THREE.Mesh(new THREE.CylinderGeometry(.24, .32, 3.2, 6), new THREE.MeshBasicMaterial({ color: 0xffe7b5 }));
-    mesh.position.copy(player.position).addScaledVector(direction(), 14); mesh.position.y -= 2;
-    scene.add(mesh); projectiles.push({ mesh, target: info.enemy, source: 'player', damage: 3, life: 13, trail: 0, velocity: direction().clone().multiplyScalar(860) });
+    syncPlayerMesh();
+    spawnMissile(hardpointWorld(playerAsset, player.missiles % 2 ? 'missileLeft' : 'missileRight'), direction(), info.enemy, 3, 'player');
     say('Fox two. Missile away.', 3);
   } else {
     if (gunCooldown > 0) return;
@@ -225,28 +283,39 @@ function fire() {
     const info = targetInfo();
     const aim = direction().clone();
     if (info && info.dot > .994 && info.distance < 1800) {
-      info.enemy.health--; if (info.enemy.health <= 0) destroyEnemy(info.enemy);
+      damageEnemy(info.enemy, 1, 'player');
     }
-    for (let i = 0; i < 2; i++) spawnParticle(player.position.clone().addScaledVector(aim, 18 + i * 28), aim.clone().multiplyScalar(1300), 0xffe4a1, .7, .55);
+    syncPlayerMesh();
+    for (let i = 0; i < 2; i++) spawnParticle(hardpointWorld(playerAsset, 'cannon').addScaledVector(aim, i * 28), aim.clone().multiplyScalar(1300), 0xffe4a1, .7, .55);
   }
+}
+function spawnMissile(origin, aim, target, damage, source) {
+  const mesh = new THREE.Mesh(new THREE.CylinderGeometry(.24, .32, 3.2, 6), new THREE.MeshBasicMaterial({ color: source === 'wingman' ? 0x8fe8ff : 0xffe7b5 }));
+  mesh.position.copy(origin); scene.add(mesh);
+  projectiles.push({ mesh, target, source, damage, life: 13, trail: 0, velocity: aim.clone().multiplyScalar(860) });
+}
+function damageEnemy(enemy, amount, source = 'player') {
+  if (!enemy.alive || mode() !== 'playing') return;
+  enemy.health -= amount;
+  if (enemy.health <= 1e-8) destroyEnemy(enemy, source);
 }
 function destroyEnemy(enemy, source = 'player') {
   if (!director.recordDestruction(enemy, source)) return;
   scene.remove(enemy.mesh);
   audio.play('destroy');
   for (let i = 0; i < 25; i++) spawnParticle(enemy.mesh.position.clone(), new THREE.Vector3((Math.random()-.5)*90,(Math.random()-.3)*70,(Math.random()-.5)*90), i % 3 === 0 ? 0x38494d : 0xffa35b, 1.3+Math.random()*1.4, 1.5+Math.random()*3);
-  say(enemies.filter(e => e.alive).length === 1 ? 'One bandit left. Finish the job, Galm 1.' : ['Confirmed hit. Target destroyed.', 'Splash one. Keep your eyes on the sky.', 'Good kill, Galm 1. On to the next.'][run.roundKills % 3], 7);
+  say(source === 'wingman' ? 'Galm 2, splash one. Hostile destroyed.' : enemies.filter(e => e.alive).length === 1 ? 'One bandit left. Finish the job, Galm 1.' : ['Confirmed hit. Target destroyed.', 'Splash one. Keep your eyes on the sky.', 'Good kill, Galm 1. On to the next.'][run.roundKills % 3], 7);
   if (enemy.id === selectedId) selectBestTarget();
 }
 function finishMission() {
   if (!director.endRun()) return;
-  keys.clear(); incoming = 0; currentWarning = ''; lockTime = 0;
+  keys.clear(); incoming = 0; incomingWingman = 0; currentWarning = ''; manualLock.reset(); wingman?.stopCombat();
   clearCombatEffects(); updateUI();
   audio.play('warning');
   showDialog('lost');
 }
 function clearRound() {
-  keys.clear(); incoming = 0; currentWarning = ''; lockTime = 0;
+  keys.clear(); incoming = 0; incomingWingman = 0; currentWarning = ''; manualLock.reset(); wingman?.stopCombat();
   clearCombatEffects();
   say(`Round ${run.round} cleared. Stand by for your next engagement.`, 10);
   audio.play('victory'); updateUI();
@@ -282,17 +351,26 @@ function updateFlight(dt) {
     e.mesh.rotation.set(Math.cos(run.elapsed*.2 + e.phase)*.025, e.heading, Math.cos(run.elapsed*.14 + e.phase)*.12);
   });
   const info = targetInfo();
-  if (info && info.distance < 8200 && info.dot > .974) {
-    const old = lockTime; lockTime += dt;
-    if (old < .65 && lockTime >= .65) audio.play('lock');
-  } else lockTime = 0;
+  if (manualLock.update(dt, info?.enemy, info && info.distance < 8200 && info.dot > .974)) audio.play('lock');
   fireCooldown = Math.max(0, fireCooldown-dt); gunCooldown = Math.max(0, gunCooldown-dt); flareProtect = Math.max(0, flareProtect-dt);
   if (keys.has(' ')) fire();
   threatTime += dt;
-  if (threatTime > 27 && enemies.some(e => e.alive && e.mesh.position.distanceTo(player.position) < 7000)) { incoming = 5; threatTime = 0; say('Missile inbound. Deploy flares!', 6); audio.play('warning'); }
+  if (threatTime > 27) {
+    const canThreaten = position => enemies.some(e => e.alive && e.mesh.position.distanceTo(position) < 7000);
+    const attackWingman = wingman?.alive && canThreaten(wingman.mesh.position) && (threatNumber % 2 === 1 || !canThreaten(player.position));
+    if (attackWingman || canThreaten(player.position)) {
+      threatTime = 0; threatNumber++;
+      if (attackWingman) { incomingWingman = 5; say('Galm 2, missile inbound. Defensive break.', 6); }
+      else { incoming = 5; say('Missile inbound. Deploy flares!', 6); audio.play('warning'); }
+    }
+  }
   if (incoming > 0) {
     incoming -= dt;
     if (incoming <= 0 && flareProtect <= 0) { player.health = Math.max(0, player.health - 24); audio.play('hit'); area.classList.add('damage-flash'); setTimeout(() => area.classList.remove('damage-flash'), 350); if (!player.health) finishMission(); }
+  }
+  if (incomingWingman > 0) {
+    incomingWingman -= dt;
+    if (incomingWingman <= 0 && wingman?.alive) wingman.damage(toWingmanDamage(24));
   }
   const clearance = player.position.y - ground;
   currentWarning = incoming > 0 ? 'MISSILE ALERT · DEPLOY FLARES [F]' : clearance < 130 ? 'CAUTION · PULL UP' : '';
@@ -305,9 +383,8 @@ function updateEffects(dt) {
     if (p.target.alive) {
       temp.copy(p.target.mesh.position).sub(p.mesh.position);
       if (temp.length() < 32 + dt * 900) {
-        p.target.health -= p.damage;
-        if (p.target.health <= 0) destroyEnemy(p.target, p.source);
-        else audio.play('hit');
+        damageEnemy(p.target, p.damage, p.source);
+        if (p.target.alive) audio.play('hit');
         disposeEffect(p.mesh); projectiles.splice(i, 1); continue;
       }
       p.velocity.lerp(temp.normalize().multiplyScalar(970), Math.min(1, dt * 4));
@@ -325,19 +402,25 @@ function updateEffects(dt) {
   }
 }
 
-function updateCamera(dt) {
+function syncPlayerMesh() {
   playerJet.position.copy(player.position);
   playerJet.rotation.set(player.pitch, -player.heading, player.roll, 'YXZ');
+}
+function updateCamera(dt) {
+  syncPlayerMesh();
   playerJet.userData.setThrust?.(player.throttle, visualTime);
   const f = direction().clone();
+  const rear = rearView();
+  playerJet.visible = view === 'chase';
   if (view === 'chase') {
-    desiredCamera.copy(player.position).addScaledVector(f, -80); desiredCamera.y += 27;
-    camera.position.lerp(desiredCamera, mode() === 'ready' ? 1 : 1 - Math.exp(-dt * 8));
-    lookAt.copy(player.position).addScaledVector(f, 170); lookAt.y -= 8;
+    desiredCamera.copy(player.position).addScaledVector(f, rear ? 80 : -80); desiredCamera.y += 27;
+    camera.position.lerp(desiredCamera, mode() === 'ready' || rear !== wasRearView ? 1 : 1 - Math.exp(-dt * 8));
+    lookAt.copy(player.position).addScaledVector(f, rear ? -170 : 170); lookAt.y -= 8;
   } else {
     camera.position.copy(player.position).addScaledVector(f, 7); camera.position.y += 2;
-    lookAt.copy(camera.position).addScaledVector(f, 300);
+    lookAt.copy(camera.position).addScaledVector(f, rear ? -300 : 300);
   }
+  wasRearView = rear;
   camera.up.set(-Math.sin(player.roll * (view === 'cockpit' ? .85 : .12)), Math.cos(player.roll * (view === 'cockpit' ? .85 : .12)), 0);
   camera.lookAt(lookAt);
   camera.updateMatrixWorld();
@@ -351,7 +434,7 @@ function updateUI() {
   $('mission-state').textContent = run.paused ? 'SORTIE PAUSED' : {
     [Phase.READY]: 'SORTIE READY', [Phase.COMBAT]: 'WEAPONS FREE',
     [Phase.ROUND_CLEAR]: 'ROUND CLEARED', [Phase.INTERMISSION]: 'SELECT ENGAGEMENT',
-    [Phase.GAME_OVER]: 'SORTIE LOST',
+    [Phase.HANGAR]: 'FLIGHT OPERATIONS', [Phase.GAME_OVER]: 'SORTIE LOST',
   }[run.phase];
   $('mission-time').textContent = `${String(Math.floor(run.elapsed/60)).padStart(2,'0')}:${String(Math.floor(run.elapsed%60)).padStart(2,'0')}`;
   $('score').textContent = String(run.score).padStart(6,'0');
@@ -362,6 +445,10 @@ function updateUI() {
   $('mach').textContent = `M ${(player.speed / 1225).toFixed(2)}`;
   $('warning').textContent = mode() === 'playing' ? currentWarning : '';
   $('warning').classList.toggle('visible', mode() === 'playing' && !!currentWarning);
+  $('wingman-status').textContent = wingman ? `GALM 2 · ${wingman.alive ? `${Math.ceil(wingman.hp)}/${wingman.definition.maxHP} HP · ${wingman.aiState}` : 'DESTROYED'}${wingman.assetStatus === 'fallback' ? ' · SUBSTITUTE MODEL' : ''}` : 'GALM 2 · AWAITING SELECTION';
+  const lock = manualLock.getSnapshot();
+  $('touch-lock').textContent = lock.locked ? 'LOCKED' : lock.requested ? 'ACQ' : 'LOCK';
+  $('touch-lock').setAttribute('aria-pressed', String(lock.requested));
   $('local-time').textContent = new Date(Date.UTC(2000, 0, 1, 17, 42, 8 + Math.floor(run.elapsed))).toISOString().slice(11,19);
 }
 
@@ -371,13 +458,16 @@ function frame(now) {
   const previousPhase = run.phase;
   director.update(dt);
   if (previousPhase === Phase.ROUND_CLEAR && run.phase === Phase.INTERMISSION) showDialog('intermission');
-  if (mode() === 'playing') { updateFlight(dt); if (mode() === 'playing') updateEffects(dt); }
+  if (mode() === 'playing') {
+    updateFlight(dt);
+    if (mode() === 'playing') { wingman?.update(dt, enemies, incomingWingman > 0); updateEffects(dt); }
+  }
   // Resolve completion after all combat work; never dispose a projectile array mid-update.
   if (director.checkRoundComplete()) clearRound();
   updateCamera(dt);
   world.update(visualTime, player.position);
   renderer.render(scene, camera);
-  const state = { width, height, time: visualTime, heading: (THREE.MathUtils.radToDeg(player.heading)%360+360)%360, pitch: player.pitch, roll: player.roll, speed: player.speed, altitude: player.position.y, throttle: player.throttle, health: player.health, missiles: player.missiles, weapon, locked: lockTime >= .65, target: targetInfo(), enemies: enemies.filter(e => e.alive).map(e => ({ x: e.mesh.position.x-player.position.x, z: e.mesh.position.z-player.position.z, id:e.id, selected:e.id===selectedId })), playerHeading: player.heading, mode: mode(), warning: currentWarning };
+  const state = { width, height, time: visualTime, heading: (THREE.MathUtils.radToDeg(player.heading)%360+360)%360, pitch: player.pitch, roll: player.roll, speed: player.speed, altitude: player.position.y, throttle: player.throttle, health: player.health, missiles: player.missiles, weapon, locked: manualLock.getSnapshot().locked, acquiring: manualLock.getSnapshot().requested, rearView: rearView(), target: targetInfo(), enemies: enemies.filter(e => e.alive).map(e => ({ x: e.mesh.position.x-player.position.x, z: e.mesh.position.z-player.position.z, id:e.id, selected:e.id===selectedId })), wingman: wingman?.alive ? { x: wingman.mesh.position.x - player.position.x, z: wingman.mesh.position.z - player.position.z } : null, playerHeading: player.heading, mode: mode(), warning: currentWarning };
   hud.draw(state); drawRadar($('radar'), state);
   audio.update({ speed: player.speed, throttle: player.throttle, mode: mode() });
   if (visualTime - lastUiTime > .12) { updateUI(); lastUiTime = visualTime; }
@@ -385,30 +475,36 @@ function frame(now) {
 updateUI(); updateCamera(.016); requestAnimationFrame(frame);
 requestAnimationFrame(() => { $('loading-cover').classList.add('loaded'); setTimeout(() => $('loading-cover').remove(), 750); });
 
-const controls = [['W / ↑','Pitch up'],['S / ↓','Pitch down'],['A D / ← →','Bank & turn'],['Q / E','Rudder left / right'],['SHIFT','Afterburner'],['B','Air brake'],['SPACE','Fire weapon'],['TAB','Cycle target'],['1 / 2','Missiles / cannon'],['F','Deploy flares'],['C','Switch camera'],['ESC / P','Pause sortie']];
+const controls = [['W / ↑','Pitch up'],['S / ↓','Pitch down'],['A D / ← →','Bank & turn'],['Q / E','Rudder left / right'],['SHIFT','Afterburner'],['B','Air brake'],['SPACE','Fire weapon'],['TAB','Cycle hostile target'],['L','Request / cancel lock'],['V (HOLD)','Rear view'],['1 / 2','Missiles / cannon'],['F','Deploy flares'],['C','Switch camera'],['ESC / P','Pause sortie']];
 function showDialog(type) {
   if (activeDialog === type && $('game-dialog').open) return;
   const wasPaused = run.paused;
   if ($('game-dialog').open) $('game-dialog').close();
   activeDialog = type;
-  $('game-dialog').classList.toggle('intermission-dialog', type === 'intermission');
-  if (type === 'help') {
+  $('game-dialog').classList.toggle('intermission-dialog', ['intermission', 'hangar'].includes(type));
+  if (type === 'hangar') {
+    renderHangar($('dialog-content'), { selectedId: selectedWingmanId, wingman: run.hangarReturnPhase === Phase.INTERMISSION ? wingman : null, round: run.hangarReturnPhase === Phase.INTERMISSION ? run.round : 0, onLaunch: launchFromHangar });
+  } else if (type === 'help') {
     resumeAfterDialog = !wasPaused && [Phase.COMBAT, Phase.ROUND_CLEAR].includes(run.phase);
     director.setPaused(true);
-    $('dialog-content').innerHTML = `<h2 id="dialog-title">KNOW YOUR <em>AIRCRAFT.</em></h2><p class="dialog-description">You have the aircraft. Make the sky yours.</p><div class="controls-grid">${controls.map(([key,text])=>`<div><kbd>${key}</kbd><span>${text}</span></div>`).join('')}</div><div class="dialog-tip"><b>COMBAT TIP</b> Keep a target near the center of your HUD until you see LOCK, then fire. Missiles track automatically. Watch your radar and use flares when a missile is inbound.</div><button class="launch-button" id="dialog-primary">${resumeAfterDialog ? 'RETURN TO SORTIE' : 'READY TO FLY'} ${icon('chevron')}</button>`;
+    $('dialog-content').innerHTML = `<h2 id="dialog-title">KNOW YOUR <em>AIRCRAFT.</em></h2><p class="dialog-description">You have the aircraft. Make the sky yours.</p><div class="controls-grid">${controls.map(([key,text])=>`<div><kbd>${key}</kbd><span>${text}</span></div>`).join('')}</div><div class="dialog-tip"><b>COMBAT TIP</b> Select a hostile with TAB, press L (or touch LOCK), and keep it centered until LOCK appears. Press L again to cancel. Leaving the envelope resets acquisition. Missiles track automatically. Watch your radar and use flares when a missile is inbound.</div><button class="launch-button" id="dialog-primary">${resumeAfterDialog ? 'RETURN TO SORTIE' : 'READY TO FLY'} ${icon('chevron')}</button>`;
   } else if (type === 'pause') {
     $('dialog-content').innerHTML = `<h2 id="dialog-title">HOLDING <em>PATTERN.</em></h2><p class="dialog-description">Your sortie is paused. Take a breath, pilot.</p><div class="pause-summary"><span>ROUND ${run.round} / ${run.currentEncounter.title}</span><b>${run.roundKills} / ${enemies.length} TARGETS DESTROYED</b></div><button class="launch-button" id="dialog-primary">RESUME SORTIE ${icon('play')}</button><button class="secondary-button" id="restart-btn">RESTART RUN</button>`;
   } else if (type === 'intermission') {
-    renderIntermission($('dialog-content'), director.getSnapshot(), continueSortie);
+    renderIntermission($('dialog-content'), director.getSnapshot(), continueSortie, openHangar, pendingEncounterId);
   } else {
     $('dialog-content').innerHTML = `<div class="result-eyebrow">AIRCRAFT LOST / ROUND ${run.round}</div><h2 id="dialog-title">GHOSTS FLY <em>AGAIN.</em></h2><p class="dialog-description">The run is over. Regroup and take another run at the coast.</p><div class="result-stats"><div><span>SCORE</span><b>${String(run.score).padStart(6,'0')}</b></div><div><span>TOTAL KILLS</span><b>${run.totalKills}</b></div><div><span>FLIGHT TIME</span><b>${$('mission-time').textContent}</b></div></div><button class="launch-button" id="dialog-primary">FLY AGAIN ${icon('chevron')}</button>`;
   }
   $('game-dialog').showModal();
-  if (type !== 'intermission') $('dialog-primary').onclick = () => { if (type === 'help') closeDialog(); else if (type === 'pause') resumeGame(); else startSortie(); };
+  if (!['intermission', 'hangar'].includes(type)) $('dialog-primary').onclick = () => { if (type === 'help') closeDialog(); else if (type === 'pause') resumeGame(); else startSortie(); };
   if ($('restart-btn')) $('restart-btn').onclick = () => { closeDialog(false); resetGame(); startSortie(); };
   keys.clear();
 }
 function closeDialog(resume = true) {
+  if (preparingAircraft && run.phase === Phase.HANGAR) return;
+  if (activeDialog === 'intermission') pendingEncounterId = document.querySelector('input[name="encounter"]:checked')?.value || pendingEncounterId;
+  const returnToIntermission = activeDialog === 'hangar' && run.hangarReturnPhase === Phase.INTERMISSION;
+  if (run.phase === Phase.HANGAR) director.leaveHangar();
   $('game-dialog').close();
   if (resume && (activeDialog === 'pause' || (activeDialog === 'help' && resumeAfterDialog))) {
     director.setPaused(false); $('pause-btn').innerHTML = icon('pause'); $('pause-btn').setAttribute('aria-label', 'Pause game');
@@ -420,6 +516,7 @@ function closeDialog(resume = true) {
   }
   activeDialog = ''; resumeAfterDialog = false; keys.clear();
   if (resume && run.paused) showDialog('pause');
+  else if (resume && returnToIntermission) showDialog('intermission');
 }
 function resumeGame() { closeDialog(); }
 function pauseGame() {
@@ -441,7 +538,8 @@ window.addEventListener('keydown', (e) => {
   if (!e.repeat) {
     if (key === 'Escape' || key === 'p') { e.preventDefault(); pauseGame(); }
     if (key === 'h') showDialog('help');
-    if (key === 'c') setView(view === 'chase' ? 'cockpit' : 'chase');
+    if (key === 'c' && !rearView()) setView(view === 'chase' ? 'cockpit' : 'chase');
+    if (key === 'l') toggleLock();
     if (key === '1') setWeapon('MSL'); if (key === '2') setWeapon('GUN');
     if (key === 'Tab' && mode() === 'playing') cycleTarget();
     if (key === 'f') deployFlares();
@@ -459,14 +557,17 @@ document.querySelectorAll('[data-key]').forEach(button => {
 $('touch-fire').onpointerdown = e => { e.preventDefault(); e.target.setPointerCapture(e.pointerId); keys.add(' '); };
 $('touch-fire').onpointerup = () => keys.delete(' '); $('touch-fire').onpointercancel = () => keys.delete(' ');
 $('touch-target').onclick = cycleTarget;
+$('touch-lock').onclick = toggleLock;
 
 // A read-only snapshot helps verify flight controls and mission state in the browser.
 window.__flight = Object.freeze({ getState: () => ({
   ...director.getSnapshot(), mode: mode(), view, weapon, kills: run.totalKills,
-  locked: lockTime >= .65, target: selectedTarget()?.name, targetId: selectedTarget()?.id,
+  locked: manualLock.getSnapshot().locked, manualLock: manualLock.getSnapshot(), rearView: rearView(),
+  selectedWingmanAircraft: { id: selectedWingmanId, name: getWingmanAircraft(selectedWingmanId).name }, wingman: wingman?.getSnapshot() ?? null,
+  target: selectedTarget()?.name, targetId: selectedTarget()?.id,
   targetPosition: selectedTarget()?.mesh.position.toArray(), position: player.position.toArray(),
   heading: player.heading, pitch: player.pitch, roll: player.roll, throttle: player.throttle,
   speed: player.speed, health: player.health, missiles: player.missiles, flares: player.flares,
   activeProjectiles: projectiles.length, enemies: enemies.filter(e => e.alive).length,
-  incoming, warning: currentWarning,
+  incoming, incomingWingman, warning: currentWarning,
 }) });

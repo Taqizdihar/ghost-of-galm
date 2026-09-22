@@ -66,9 +66,8 @@ kbd { font-family: var(--mono); font-size: 8px; font-weight: 400; color: #b3c2bd
 .radar-panel { position: absolute; left: 38px; bottom: 31px; width: 178px; }
 .instrument-title { font: 8px var(--mono); letter-spacing: 1.7px; color: #d6e3d3; display: flex; align-items: center; justify-content: space-between; }
 .instrument-title > span { color: #95b3a7; font-size: 7px; letter-spacing: 1px; }
-.radar-wrap { margin-top: 10px; position: relative; width: 178px; height: 178px; border: 1px solid #b5d6b72b; border-radius: 50%; background: #122c3366; }
+.radar-wrap { margin-top: 10px; position: relative; width: 178px; height: 178px; border: 1px solid #b5d6b72b; background: #122c3366; }
 #radar { width: 176px; height: 176px; }
-.radar-n { position: absolute; top: -4px; left: 84px; font: 7px var(--mono); color: #d0e3c9; background: #294749; padding: 0 3px; }
 .radar-caption { margin-top: 12px; display: flex; align-items: center; gap: 6px; color: #c0d9be; font: 7px var(--mono); letter-spacing: 1px; }
 .radar-caption > span:last-child { margin-left: auto; color: #809e97; font-size: 6px; }
 .comms { position: absolute; bottom: 38px; left: 50%; transform: translateX(-50%); width: min(430px, 34vw); padding: 13px 20px 14px; border-left: 2px solid #d5ad78; background: linear-gradient(90deg,#1a303890,#19333c1a); }
@@ -124,6 +123,17 @@ kbd { font-family: var(--mono); font-size: 8px; font-weight: 400; color: #b3c2bd
 .loading-track i { width: 60px; background: var(--orange); height: 100%; display: block; animation: load 1s infinite; }
 @keyframes load { to { transform: translateX(180px); } }
 .touch-controls { display: none; }
+.wingman-status { position: absolute; left: 50%; bottom: 146px; transform: translateX(-50%); max-width: 44%; color: #83e5ff; font: 8px var(--mono); letter-spacing: .6px; text-align: center; }
+.hangar-status { color: #83e5ff; font: 10px/1.6 var(--mono); }
+@media (pointer: coarse) and (min-width: 651px) {
+  .is-playing .touch-controls { position: absolute; bottom: 275px; left: 25px; right: 25px; display: flex; align-items: flex-end; gap: 10px; pointer-events: none; }
+  .touch-controls button { pointer-events: auto; touch-action: none; background: #1f3d448c; border: 1px solid #bddfc455; min-width: 48px; height: 44px; color: #d1e8c8; font: 9px var(--mono); }
+  .touch-steering { display: grid; grid-template-columns: repeat(3, 44px); gap: 3px; margin-right: auto; }
+  .touch-steering button { min-width: 44px; font-size: 18px; }
+  .touch-steering button:first-child { grid-column: 2; }
+  .touch-steering button:nth-child(2) { grid-column: 1; }
+}
+button:disabled { opacity: .55; cursor: wait; }
 dialog { color: #e4ebe1; background: #16272c; border: 1px solid #66786b; padding: 26px 34px 34px; width: min(540px, calc(100vw - 32px)); box-shadow: 0 20px 120px #05161bac; max-height: calc(100dvh - 40px); }
 dialog::backdrop { background: #07161e88; backdrop-filter: blur(6px); }
 .intermission-dialog { width: min(640px, calc(100vw - 32px)); }
@@ -166,6 +176,9 @@ dialog .launch-button { min-height: 45px; }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
 @media (max-width: 650px) {
   .is-playing .touch-controls { bottom: 250px; }
+  .touch-controls { gap: 5px; }
+  .touch-controls button { min-width: 38px; font-size: 7px; }
+  .wingman-status { left: 20px; bottom: 78px; max-width: calc(100% - 40px); transform: none; font-size: 7px; text-align: left; }
   .is-playing .aircraft-status { position: fixed; top: 148px; right: 20px; width: 122px; margin: 0; }
   .is-playing .aircraft-silhouette { display: none; }
 }
