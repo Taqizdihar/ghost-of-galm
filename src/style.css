@@ -126,6 +126,18 @@ kbd { font-family: var(--mono); font-size: 8px; font-weight: 400; color: #b3c2bd
 .touch-controls { display: none; }
 dialog { color: #e4ebe1; background: #16272c; border: 1px solid #66786b; padding: 26px 34px 34px; width: min(540px, calc(100vw - 32px)); box-shadow: 0 20px 120px #05161bac; max-height: calc(100dvh - 40px); }
 dialog::backdrop { background: #07161e88; backdrop-filter: blur(6px); }
+.intermission-dialog { width: min(640px, calc(100vw - 32px)); }
+.intermission-summary { display: flex; flex-wrap: wrap; gap: 16px; font: 9px var(--mono); color: #a6b9b3; }
+.intermission-summary b { color: var(--mint); margin-left: 6px; }
+.encounter-choices { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(210px, 100%), 1fr)); gap: 10px; margin: 22px 0 0; padding: 0; border: 0; }
+.encounter-choices legend { padding: 0 0 12px; font: 8px var(--mono); letter-spacing: 1.5px; color: #a6b9b3; }
+.encounter-card { display: flex; align-items: flex-start; gap: 10px; border: 1px solid var(--line); padding: 13px; cursor: pointer; background: #102127; }
+.encounter-card:has(input:checked) { border-color: var(--mint); background: #234039; }
+.encounter-card:focus-within { outline: 2px solid var(--orange); outline-offset: 2px; }
+.encounter-card input { margin: 2px 0 0; accent-color: var(--mint); }
+.encounter-card small { display: block; color: var(--mint); font: 8px var(--mono); letter-spacing: .7px; }
+.encounter-card strong { display: block; margin: 8px 0 5px; font: 500 21px var(--condensed); letter-spacing: .7px; }
+.encounter-card span span { display: block; font-size: 11px; line-height: 1.5; color: #b5c7be; }
 .dialog-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .dialog-top .eyebrow { font-size: 7px; letter-spacing: 1.4px; color: #a7b5a7; }
 dialog h2 { font: 500 44px/.99 var(--condensed); letter-spacing: 1px; margin: 24px 0 13px; }

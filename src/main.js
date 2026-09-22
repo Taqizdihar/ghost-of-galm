@@ -2,6 +2,11 @@ import * as THREE from 'three';
 import { createWorld, createAircraft } from './world.js';
 import { FlightHUD, drawRadar } from './hud.js';
 import { FlightAudio } from './audio.js';
+import { createRunState, Phase, presentationMode } from './game/state.js';
+import { createRoundDirector } from './game/round-director.js';
+import { DEFAULT_ENCOUNTER_ID, getEncounter, enemyCount } from './game/encounters.js';
+import { spawnEncounter, disposeEnemies } from './combat/enemies.js';
+import { renderIntermission } from './ui/intermission.js';
 import './style.css';
 
 const icon = (name, size = 18) => {
@@ -39,10 +44,10 @@ document.querySelector('#app').innerHTML = `
         <div class="mission-location"><span class="tiny-cross">+</span><span>REYNIS COAST, BELKA<br><span class="muted">51° 24′ N &nbsp; 08° 32′ E</span></span></div>
       </div>
       <div class="mission-panel">
-        <div class="panel-eyebrow"><span class="status-dot"></span><span id="mission-state">SORTIE READY</span><span class="panel-code">G / 01</span></div>
-        <div class="mission-heading">OPERATION <span>SILENT TIDE</span></div>
+        <div class="panel-eyebrow"><span class="status-dot"></span><span id="mission-state">SORTIE READY</span><span class="panel-code" id="round-number">ROUND 01</span></div>
+        <div class="mission-heading">OPERATION <span id="encounter-title">SILENT TIDE</span></div>
         <p id="objective">Clear hostile aircraft from the coastline.</p>
-        <div class="mission-stats"><span>TARGETS <strong id="target-count">00 <i>/ 06</i></strong></span><span>TIME <strong id="mission-time">00:00</strong></span><span>SCORE <strong id="score">000000</strong></span></div>
+        <div class="mission-stats"><span>TARGETS <strong id="target-count"></strong></span><span>TIME <strong id="mission-time">00:00</strong></span><span>SCORE <strong id="score">000000</strong></span></div>
         <button id="launch-btn" class="launch-button"><span>LAUNCH SORTIE</span>${icon('chevron', 18)}</button>
         <div id="flight-active" class="flight-active" hidden><span class="status-dot"></span> WEAPONS FREE <span>GOOD HUNTING, GALM 1.</span></div>
       </div>
@@ -87,34 +92,20 @@ scene.add(playerJet);
 const hud = new FlightHUD($('hud'));
 const keys = new Set();
 const player = { position: new THREE.Vector3(0, 460, 1400), heading: 0, pitch: 0, roll: 0, speed: 880, throttle: .64, health: 100, missiles: 32, flares: 6 };
-let mode = 'ready', view = 'chase', weapon = 'MSL', elapsed = 0, score = 0, kills = 0, selectedId = 0;
+const run = createRunState();
+const mode = () => presentationMode(run);
+let view = 'chase', weapon = 'MSL', selectedId = 0;
 let lockTime = 0, fireCooldown = 0, gunCooldown = 0, threatTime = 0, incoming = 0, flareProtect = 0, radioUntil = 0, currentWarning = '', lastUiTime = 0;
 let width = 0, height = 0, visualTime = 0, lastTime = performance.now(), activeDialog = '', resumeAfterDialog = false;
 let enemies = [], projectiles = [], particles = [];
 const forward = new THREE.Vector3(), temp = new THREE.Vector3(), desiredCamera = new THREE.Vector3(), lookAt = new THREE.Vector3();
-const enemyNames = ['MIG-29', 'SU-27', 'MIG-29', 'SU-27', 'MIG-29', 'SU-27'];
-
-function resetEnemies() {
-  const geometries = new Set(), materials = new Set();
-  enemies.forEach((e) => {
-    scene.remove(e.mesh);
-    e.mesh.traverse(object => {
-      if (object.geometry) geometries.add(object.geometry);
-      if (object.material) (Array.isArray(object.material) ? object.material : [object.material]).forEach(material => materials.add(material));
-    });
-  });
-  geometries.forEach(geometry => geometry.dispose());
-  materials.forEach(material => material.dispose());
-  enemies = Array.from({ length: 6 }, (_, i) => {
-    const mesh = createAircraft(THREE, { enemy: true });
-    const x = [-130, 410, -680, 140, -950, 540][i];
-    mesh.position.set(x, [540, 720, 440, 800, 630, 920][i], -950 - i * 950);
-    mesh.scale.setScalar(1.35);
-    scene.add(mesh);
-    return { id: i, mesh, name: enemyNames[i], alive: true, phase: i * 1.72, baseY: mesh.position.y, speed: 118 + i * 7, heading: 0, travel: -1, health: 3 };
-  });
+function replaceEncounter(encounter) {
+  disposeEnemies(scene, enemies);
+  enemies = spawnEncounter(scene, encounter, player, world.terrainHeight);
+  return enemies;
 }
-resetEnemies();
+const director = createRoundDirector(run, replaceEncounter);
+replaceEncounter(getEncounter(DEFAULT_ENCOUNTER_ID));
 
 function resize() {
   width = area.clientWidth; height = area.clientHeight;
@@ -155,26 +146,42 @@ function selectBestTarget() {
   if (candidates[0]) selectedId = candidates[0].id;
   lockTime = 0;
 }
-function say(text, seconds = 8) { $('radio-text').textContent = `“${text}”`; radioUntil = elapsed + seconds; }
+function say(text, seconds = 8) { $('radio-text').textContent = `“${text}”`; radioUntil = run.elapsed + seconds; }
 
 async function startSortie() {
+  if (run.phase === Phase.INTERMISSION) { showDialog('intermission'); return; }
+  if (![Phase.READY, Phase.GAME_OVER].includes(run.phase)) return;
   closeDialog(false);
-  if (mode === 'won' || mode === 'lost') resetGame();
-  mode = 'playing';
+  resetGame();
+  director.startRun();
+  prepareRound();
+  await audio.start(); audio.setMuted(muted);
+}
+function prepareRound() {
+  keys.clear(); selectedId = enemies[0]?.id ?? 0; lockTime = 0;
+  threatTime = 0; incoming = 0; currentWarning = '';
   area.classList.add('is-playing');
   $('launch-btn').hidden = true;
   $('flight-active').hidden = false;
-  $('mission-state').textContent = 'MISSION IN PROGRESS';
   $('pause-btn').innerHTML = icon('pause');
-  await audio.start(); audio.setMuted(muted);
-  say('Galm 1, you are cleared to engage. Take back our skies.', 10);
+  $('pause-btn').setAttribute('aria-label', 'Pause game');
+  say(`Galm 1, round ${run.round}. ${enemies.length} contacts. You are cleared to engage.`, 10);
+  updateUI();
   area.focus({ preventScroll: true });
+}
+function continueSortie(encounterId) {
+  if (!director.nextRound(encounterId)) return;
+  closeDialog(false);
+  prepareRound();
+}
+function clearCombatEffects() {
+  projectiles.forEach(p => disposeEffect(p.mesh)); particles.forEach(p => disposeEffect(p.mesh));
+  projectiles = []; particles = [];
 }
 function resetGame() {
   player.position.set(0, 460, 1400); Object.assign(player, { heading: 0, pitch: 0, roll: 0, speed: 880, throttle: .64, health: 100, missiles: 32, flares: 6 });
-  elapsed = 0; score = 0; kills = 0; selectedId = 0; lockTime = 0; threatTime = 0; incoming = 0; flareProtect = 0; fireCooldown = 0; gunCooldown = 0; currentWarning = '';
-  projectiles.forEach(p => disposeEffect(p.mesh)); particles.forEach(p => disposeEffect(p.mesh)); projectiles = []; particles = [];
-  resetEnemies(); setWeapon('MSL'); view = 'chase'; setView('chase'); mode = 'ready'; keys.clear();
+  selectedId = 0; lockTime = 0; threatTime = 0; incoming = 0; flareProtect = 0; fireCooldown = 0; gunCooldown = 0; currentWarning = '';
+  clearCombatEffects(); director.reset(); setWeapon('MSL'); setView('chase'); keys.clear();
 }
 function setWeapon(next) {
   weapon = next;
@@ -189,7 +196,7 @@ function setView(next) {
   $('chase-btn').setAttribute('aria-pressed', view === 'chase'); $('cockpit-btn').setAttribute('aria-pressed', view === 'cockpit');
 }
 function deployFlares() {
-  if (mode !== 'playing' || player.flares <= 0) return;
+  if (mode() !== 'playing' || player.flares <= 0) return;
   player.flares--; flareProtect = 6; incoming = 0; audio.play('missile');
   for (let i = 0; i < 14; i++) spawnParticle(player.position.clone(), new THREE.Vector3((Math.random()-.5)*100, -15-Math.random()*30, (Math.random()-.5)*100), 0xffd38a, 2.4, 1.8);
   say('Countermeasures deployed. Keep moving.', 5);
@@ -201,7 +208,7 @@ function spawnParticle(position, velocity, color, life, size) {
   mesh.position.copy(position); scene.add(mesh); particles.push({ mesh, velocity, life, maxLife: life });
 }
 function fire() {
-  if (mode !== 'playing') return;
+  if (mode() !== 'playing') return;
   if (weapon === 'MSL') {
     if (fireCooldown > 0 || player.missiles <= 0) return;
     const info = targetInfo();
@@ -210,7 +217,7 @@ function fire() {
     player.missiles--; fireCooldown = .9; audio.play('missile');
     const mesh = new THREE.Mesh(new THREE.CylinderGeometry(.24, .32, 3.2, 6), new THREE.MeshBasicMaterial({ color: 0xffe7b5 }));
     mesh.position.copy(player.position).addScaledVector(direction(), 14); mesh.position.y -= 2;
-    scene.add(mesh); projectiles.push({ mesh, target: info.enemy, life: 13, trail: 0, velocity: direction().clone().multiplyScalar(860) });
+    scene.add(mesh); projectiles.push({ mesh, target: info.enemy, source: 'player', damage: 3, life: 13, trail: 0, velocity: direction().clone().multiplyScalar(860) });
     say('Fox two. Missile away.', 3);
   } else {
     if (gunCooldown > 0) return;
@@ -223,24 +230,29 @@ function fire() {
     for (let i = 0; i < 2; i++) spawnParticle(player.position.clone().addScaledVector(aim, 18 + i * 28), aim.clone().multiplyScalar(1300), 0xffe4a1, .7, .55);
   }
 }
-function destroyEnemy(enemy) {
-  if (!enemy.alive) return;
-  enemy.alive = false; scene.remove(enemy.mesh); kills++; score += 1200;
+function destroyEnemy(enemy, source = 'player') {
+  if (!director.recordDestruction(enemy, source)) return;
+  scene.remove(enemy.mesh);
   audio.play('destroy');
   for (let i = 0; i < 25; i++) spawnParticle(enemy.mesh.position.clone(), new THREE.Vector3((Math.random()-.5)*90,(Math.random()-.3)*70,(Math.random()-.5)*90), i % 3 === 0 ? 0x38494d : 0xffa35b, 1.3+Math.random()*1.4, 1.5+Math.random()*3);
-  say(kills === 5 ? 'One bandit left. Finish the job, Galm 1.' : ['Confirmed hit. Target destroyed.', 'Splash one. Keep your eyes on the sky.', 'Good kill, Galm 1. On to the next.'][kills % 3], 7);
+  say(enemies.filter(e => e.alive).length === 1 ? 'One bandit left. Finish the job, Galm 1.' : ['Confirmed hit. Target destroyed.', 'Splash one. Keep your eyes on the sky.', 'Good kill, Galm 1. On to the next.'][run.roundKills % 3], 7);
   if (enemy.id === selectedId) selectBestTarget();
-  if (kills === 6) finishMission(true);
 }
-function finishMission(won) {
-  mode = won ? 'won' : 'lost'; keys.clear(); incoming = 0;
-  $('mission-state').textContent = won ? 'MISSION COMPLETE' : 'SORTIE LOST';
-  audio.play(won ? 'victory' : 'warning');
-  showDialog(won ? 'won' : 'lost');
+function finishMission() {
+  if (!director.endRun()) return;
+  keys.clear(); incoming = 0; currentWarning = ''; lockTime = 0;
+  clearCombatEffects(); updateUI();
+  audio.play('warning');
+  showDialog('lost');
+}
+function clearRound() {
+  keys.clear(); incoming = 0; currentWarning = ''; lockTime = 0;
+  clearCombatEffects();
+  say(`Round ${run.round} cleared. Stand by for your next engagement.`, 10);
+  audio.play('victory'); updateUI();
 }
 
 function updateFlight(dt) {
-  elapsed += dt;
   const horizontal = Number(keys.has('d') || keys.has('ArrowRight')) - Number(keys.has('a') || keys.has('ArrowLeft'));
   const vertical = Number(keys.has('w') || keys.has('ArrowUp')) - Number(keys.has('s') || keys.has('ArrowDown'));
   const boosting = keys.has('Shift'), braking = keys.has('b');
@@ -253,7 +265,7 @@ function updateFlight(dt) {
   player.position.addScaledVector(direction(), player.speed / 3.6 * dt);
   player.position.y = Math.min(player.position.y, 9500);
   const ground = Math.max(0, world.terrainHeight(player.position.x, player.position.z));
-  if (player.position.y < ground + 8) { player.health = 0; finishMission(false); return; }
+  if (player.position.y < ground + 8) { player.health = 0; finishMission(); return; }
   if (Math.abs(player.position.x) > 18000 || Math.abs(player.position.z) > 47000) {
     player.heading = Math.atan2(-player.position.x, player.position.z); say('You are leaving the combat zone. Returning to the operation area.', 6);
   }
@@ -262,12 +274,12 @@ function updateFlight(dt) {
     if (e.mesh.position.z < -35000) e.travel = 1;
     if (e.mesh.position.z > 12000) e.travel = -1;
     e.mesh.position.z += e.travel * e.speed * dt;
-    e.mesh.position.x += Math.sin(elapsed*.14 + e.phase) * 13 * dt;
-    e.mesh.position.y = e.baseY + Math.sin(elapsed*.2 + e.phase) * 65;
+    e.mesh.position.x += Math.sin(run.elapsed*.14 + e.phase) * 13 * dt;
+    e.mesh.position.y = e.baseY + Math.sin(run.elapsed*.2 + e.phase) * 65;
     const eh = world.terrainHeight(e.mesh.position.x, e.mesh.position.z);
     e.mesh.position.y = Math.max(e.mesh.position.y, eh + 150);
     e.heading = THREE.MathUtils.damp(e.heading, e.travel === 1 ? Math.PI : 0, 2, dt);
-    e.mesh.rotation.set(Math.cos(elapsed*.2 + e.phase)*.025, e.heading, Math.cos(elapsed*.14 + e.phase)*.12);
+    e.mesh.rotation.set(Math.cos(run.elapsed*.2 + e.phase)*.025, e.heading, Math.cos(run.elapsed*.14 + e.phase)*.12);
   });
   const info = targetInfo();
   if (info && info.distance < 8200 && info.dot > .974) {
@@ -280,11 +292,11 @@ function updateFlight(dt) {
   if (threatTime > 27 && enemies.some(e => e.alive && e.mesh.position.distanceTo(player.position) < 7000)) { incoming = 5; threatTime = 0; say('Missile inbound. Deploy flares!', 6); audio.play('warning'); }
   if (incoming > 0) {
     incoming -= dt;
-    if (incoming <= 0 && flareProtect <= 0) { player.health = Math.max(0, player.health - 24); audio.play('hit'); area.classList.add('damage-flash'); setTimeout(() => area.classList.remove('damage-flash'), 350); if (!player.health) finishMission(false); }
+    if (incoming <= 0 && flareProtect <= 0) { player.health = Math.max(0, player.health - 24); audio.play('hit'); area.classList.add('damage-flash'); setTimeout(() => area.classList.remove('damage-flash'), 350); if (!player.health) finishMission(); }
   }
   const clearance = player.position.y - ground;
   currentWarning = incoming > 0 ? 'MISSILE ALERT · DEPLOY FLARES [F]' : clearance < 130 ? 'CAUTION · PULL UP' : '';
-  if (radioUntil < elapsed) { $('radio-text').textContent = '“Stay sharp, Galm 1. We have your six.”'; radioUntil = Infinity; }
+  if (radioUntil < run.elapsed) { $('radio-text').textContent = '“Stay sharp, Galm 1. We have your six.”'; radioUntil = Infinity; }
 }
 
 function updateEffects(dt) {
@@ -292,7 +304,12 @@ function updateEffects(dt) {
     const p = projectiles[i]; p.life -= dt;
     if (p.target.alive) {
       temp.copy(p.target.mesh.position).sub(p.mesh.position);
-      if (temp.length() < 32 + dt * 900) { destroyEnemy(p.target); disposeEffect(p.mesh); projectiles.splice(i, 1); continue; }
+      if (temp.length() < 32 + dt * 900) {
+        p.target.health -= p.damage;
+        if (p.target.health <= 0) destroyEnemy(p.target, p.source);
+        else audio.play('hit');
+        disposeEffect(p.mesh); projectiles.splice(i, 1); continue;
+      }
       p.velocity.lerp(temp.normalize().multiplyScalar(970), Math.min(1, dt * 4));
     }
     p.mesh.position.addScaledVector(p.velocity, dt);
@@ -315,7 +332,7 @@ function updateCamera(dt) {
   const f = direction().clone();
   if (view === 'chase') {
     desiredCamera.copy(player.position).addScaledVector(f, -80); desiredCamera.y += 27;
-    camera.position.lerp(desiredCamera, mode === 'ready' ? 1 : 1 - Math.exp(-dt * 8));
+    camera.position.lerp(desiredCamera, mode() === 'ready' ? 1 : 1 - Math.exp(-dt * 8));
     lookAt.copy(player.position).addScaledVector(f, 170); lookAt.y -= 8;
   } else {
     camera.position.copy(player.position).addScaledVector(f, 7); camera.position.y += 2;
@@ -326,66 +343,88 @@ function updateCamera(dt) {
   camera.updateMatrixWorld();
 }
 function updateUI() {
-  $('target-count').innerHTML = `${String(kills).padStart(2,'0')} <i>/ 06</i>`;
-  $('mission-time').textContent = `${String(Math.floor(elapsed/60)).padStart(2,'0')}:${String(Math.floor(elapsed%60)).padStart(2,'0')}`;
-  $('score').textContent = String(score).padStart(6,'0');
+  const encounter = run.currentEncounter || getEncounter(DEFAULT_ENCOUNTER_ID);
+  $('target-count').innerHTML = `${String(run.roundKills).padStart(2,'0')} <i>/ ${String(enemyCount(encounter)).padStart(2,'0')}</i>`;
+  $('round-number').textContent = `ROUND ${String(run.round || 1).padStart(2, '0')}`;
+  $('encounter-title').textContent = encounter.title;
+  $('objective').textContent = encounter.description;
+  $('mission-state').textContent = run.paused ? 'SORTIE PAUSED' : {
+    [Phase.READY]: 'SORTIE READY', [Phase.COMBAT]: 'WEAPONS FREE',
+    [Phase.ROUND_CLEAR]: 'ROUND CLEARED', [Phase.INTERMISSION]: 'SELECT ENGAGEMENT',
+    [Phase.GAME_OVER]: 'SORTIE LOST',
+  }[run.phase];
+  $('mission-time').textContent = `${String(Math.floor(run.elapsed/60)).padStart(2,'0')}:${String(Math.floor(run.elapsed%60)).padStart(2,'0')}`;
+  $('score').textContent = String(run.score).padStart(6,'0');
   $('missile-count').textContent = String(player.missiles).padStart(2,'0'); $('flare-count').textContent = String(player.flares).padStart(2,'0');
   $('health-value').innerHTML = `${player.health}<span>%</span>`; $('health-bar').style.width = `${player.health}%`;
   $('airframe-state').textContent = player.health > 70 ? 'ALL SYSTEMS NOMINAL' : player.health > 30 ? 'AIRFRAME DAMAGE' : 'CRITICAL DAMAGE';
   $('g-force').textContent = `${(1 + Math.abs(player.roll)*3.8 + Math.abs(player.pitch)*1.2).toFixed(1)} G`;
   $('mach').textContent = `M ${(player.speed / 1225).toFixed(2)}`;
-  $('warning').textContent = mode === 'playing' ? currentWarning : '';
-  $('warning').classList.toggle('visible', mode === 'playing' && !!currentWarning);
-  $('local-time').textContent = new Date(Date.UTC(2000, 0, 1, 17, 42, 8 + Math.floor(elapsed))).toISOString().slice(11,19);
+  $('warning').textContent = mode() === 'playing' ? currentWarning : '';
+  $('warning').classList.toggle('visible', mode() === 'playing' && !!currentWarning);
+  $('local-time').textContent = new Date(Date.UTC(2000, 0, 1, 17, 42, 8 + Math.floor(run.elapsed))).toISOString().slice(11,19);
 }
 
 function frame(now) {
   requestAnimationFrame(frame);
   const dt = Math.min((now - lastTime) / 1000, .05); lastTime = now; visualTime += dt;
-  if (mode === 'playing') { updateFlight(dt); if (mode === 'playing') updateEffects(dt); }
+  const previousPhase = run.phase;
+  director.update(dt);
+  if (previousPhase === Phase.ROUND_CLEAR && run.phase === Phase.INTERMISSION) showDialog('intermission');
+  if (mode() === 'playing') { updateFlight(dt); if (mode() === 'playing') updateEffects(dt); }
+  // Resolve completion after all combat work; never dispose a projectile array mid-update.
+  if (director.checkRoundComplete()) clearRound();
   updateCamera(dt);
   world.update(visualTime, player.position);
   renderer.render(scene, camera);
-  const state = { width, height, time: visualTime, heading: (THREE.MathUtils.radToDeg(player.heading)%360+360)%360, pitch: player.pitch, roll: player.roll, speed: player.speed, altitude: player.position.y, throttle: player.throttle, health: player.health, missiles: player.missiles, weapon, locked: lockTime >= .65, target: targetInfo(), enemies: enemies.filter(e => e.alive).map(e => ({ x: e.mesh.position.x-player.position.x, z: e.mesh.position.z-player.position.z, id:e.id, selected:e.id===selectedId })), playerHeading: player.heading, mode, warning: currentWarning };
+  const state = { width, height, time: visualTime, heading: (THREE.MathUtils.radToDeg(player.heading)%360+360)%360, pitch: player.pitch, roll: player.roll, speed: player.speed, altitude: player.position.y, throttle: player.throttle, health: player.health, missiles: player.missiles, weapon, locked: lockTime >= .65, target: targetInfo(), enemies: enemies.filter(e => e.alive).map(e => ({ x: e.mesh.position.x-player.position.x, z: e.mesh.position.z-player.position.z, id:e.id, selected:e.id===selectedId })), playerHeading: player.heading, mode: mode(), warning: currentWarning };
   hud.draw(state); drawRadar($('radar'), state);
-  audio.update({ speed: player.speed, throttle: player.throttle, mode });
+  audio.update({ speed: player.speed, throttle: player.throttle, mode: mode() });
   if (visualTime - lastUiTime > .12) { updateUI(); lastUiTime = visualTime; }
 }
-updateCamera(.016); requestAnimationFrame(frame);
+updateUI(); updateCamera(.016); requestAnimationFrame(frame);
 requestAnimationFrame(() => { $('loading-cover').classList.add('loaded'); setTimeout(() => $('loading-cover').remove(), 750); });
 
 const controls = [['W / ↑','Pitch up'],['S / ↓','Pitch down'],['A D / ← →','Bank & turn'],['Q / E','Rudder left / right'],['SHIFT','Afterburner'],['B','Air brake'],['SPACE','Fire weapon'],['TAB','Cycle target'],['1 / 2','Missiles / cannon'],['F','Deploy flares'],['C','Switch camera'],['ESC / P','Pause sortie']];
 function showDialog(type) {
+  if (activeDialog === type && $('game-dialog').open) return;
+  const wasPaused = run.paused;
   if ($('game-dialog').open) $('game-dialog').close();
   activeDialog = type;
+  $('game-dialog').classList.toggle('intermission-dialog', type === 'intermission');
   if (type === 'help') {
-    resumeAfterDialog = mode === 'playing'; if (resumeAfterDialog) mode = 'paused';
+    resumeAfterDialog = !wasPaused && [Phase.COMBAT, Phase.ROUND_CLEAR].includes(run.phase);
+    director.setPaused(true);
     $('dialog-content').innerHTML = `<h2 id="dialog-title">KNOW YOUR <em>AIRCRAFT.</em></h2><p class="dialog-description">You have the aircraft. Make the sky yours.</p><div class="controls-grid">${controls.map(([key,text])=>`<div><kbd>${key}</kbd><span>${text}</span></div>`).join('')}</div><div class="dialog-tip"><b>COMBAT TIP</b> Keep a target near the center of your HUD until you see LOCK, then fire. Missiles track automatically. Watch your radar and use flares when a missile is inbound.</div><button class="launch-button" id="dialog-primary">${resumeAfterDialog ? 'RETURN TO SORTIE' : 'READY TO FLY'} ${icon('chevron')}</button>`;
   } else if (type === 'pause') {
-    $('dialog-content').innerHTML = `<h2 id="dialog-title">HOLDING <em>PATTERN.</em></h2><p class="dialog-description">Your sortie is paused. Take a breath, pilot.</p><div class="pause-summary"><span>OPERATION SILENT TIDE</span><b>${kills} / 6 TARGETS DESTROYED</b></div><button class="launch-button" id="dialog-primary">RESUME SORTIE ${icon('play')}</button><button class="secondary-button" id="restart-btn">RESTART MISSION</button>`;
+    $('dialog-content').innerHTML = `<h2 id="dialog-title">HOLDING <em>PATTERN.</em></h2><p class="dialog-description">Your sortie is paused. Take a breath, pilot.</p><div class="pause-summary"><span>ROUND ${run.round} / ${run.currentEncounter.title}</span><b>${run.roundKills} / ${enemies.length} TARGETS DESTROYED</b></div><button class="launch-button" id="dialog-primary">RESUME SORTIE ${icon('play')}</button><button class="secondary-button" id="restart-btn">RESTART RUN</button>`;
+  } else if (type === 'intermission') {
+    renderIntermission($('dialog-content'), director.getSnapshot(), continueSortie);
   } else {
-    const won = type === 'won';
-    $('dialog-content').innerHTML = `<div class="result-eyebrow">${won ? 'ALL HOSTILES ELIMINATED' : 'AIRCRAFT LOST'}</div><h2 id="dialog-title">${won ? 'THE SKY IS <em>YOURS.</em>' : 'GHOSTS FLY <em>AGAIN.</em>'}</h2><p class="dialog-description">${won ? 'The coast is secure. Another story for the Demon Lord.' : 'The sortie is over. Regroup and take another run at the coast.'}</p><div class="result-stats"><div><span>SCORE</span><b>${String(score).padStart(6,'0')}</b></div><div><span>TARGETS</span><b>${kills} / 6</b></div><div><span>FLIGHT TIME</span><b>${$('mission-time').textContent}</b></div></div><button class="launch-button" id="dialog-primary">FLY AGAIN ${icon('chevron')}</button>`;
+    $('dialog-content').innerHTML = `<div class="result-eyebrow">AIRCRAFT LOST / ROUND ${run.round}</div><h2 id="dialog-title">GHOSTS FLY <em>AGAIN.</em></h2><p class="dialog-description">The run is over. Regroup and take another run at the coast.</p><div class="result-stats"><div><span>SCORE</span><b>${String(run.score).padStart(6,'0')}</b></div><div><span>TOTAL KILLS</span><b>${run.totalKills}</b></div><div><span>FLIGHT TIME</span><b>${$('mission-time').textContent}</b></div></div><button class="launch-button" id="dialog-primary">FLY AGAIN ${icon('chevron')}</button>`;
   }
   $('game-dialog').showModal();
-  $('dialog-primary').onclick = () => { if (type === 'help') closeDialog(); else if (type === 'pause') resumeGame(); else startSortie(); };
+  if (type !== 'intermission') $('dialog-primary').onclick = () => { if (type === 'help') closeDialog(); else if (type === 'pause') resumeGame(); else startSortie(); };
   if ($('restart-btn')) $('restart-btn').onclick = () => { closeDialog(false); resetGame(); startSortie(); };
   keys.clear();
 }
 function closeDialog(resume = true) {
   $('game-dialog').close();
-  if (resume && (activeDialog === 'pause' || (activeDialog === 'help' && resumeAfterDialog))) { mode = 'playing'; $('pause-btn').innerHTML = icon('pause'); }
-  if (mode === 'won' || mode === 'lost') {
+  if (resume && (activeDialog === 'pause' || (activeDialog === 'help' && resumeAfterDialog))) {
+    director.setPaused(false); $('pause-btn').innerHTML = icon('pause'); $('pause-btn').setAttribute('aria-label', 'Pause game');
+  }
+  if (run.phase === Phase.GAME_OVER || run.phase === Phase.INTERMISSION) {
     $('launch-btn').hidden = false;
-    $('launch-btn').innerHTML = `<span>FLY AGAIN</span>${icon('chevron', 18)}`;
+    $('launch-btn').innerHTML = `<span>${run.phase === Phase.INTERMISSION ? 'SELECT ENGAGEMENT' : 'FLY AGAIN'}</span>${icon('chevron', 18)}`;
     $('flight-active').hidden = true;
   }
   activeDialog = ''; resumeAfterDialog = false; keys.clear();
+  if (resume && run.paused) showDialog('pause');
 }
-function resumeGame() { closeDialog(); mode = 'playing'; $('pause-btn').innerHTML = icon('pause'); $('pause-btn').setAttribute('aria-label','Pause game'); }
+function resumeGame() { closeDialog(); }
 function pauseGame() {
-  if (mode === 'playing') { mode = 'paused'; $('pause-btn').innerHTML = icon('play'); $('pause-btn').setAttribute('aria-label','Resume game'); showDialog('pause'); }
-  else if (mode === 'paused') closeDialog();
+  if (mode() === 'playing') { director.setPaused(true); $('pause-btn').innerHTML = icon('play'); $('pause-btn').setAttribute('aria-label','Resume game'); showDialog('pause'); }
+  else if (mode() === 'paused') closeDialog();
 }
 $('launch-btn').onclick = startSortie;
 $('help-btn').onclick = () => showDialog('help'); $('all-controls').onclick = () => showDialog('help');
@@ -398,20 +437,20 @@ $('missile-btn').onclick = () => setWeapon('MSL'); $('gun-btn').onclick = () => 
 window.addEventListener('keydown', (e) => {
   const key = e.key.length === 1 ? e.key.toLowerCase() : e.key;
   if ($('game-dialog').open) { if (key === 'p' && activeDialog === 'pause') closeDialog(); return; }
-  if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' ','Tab','Control','Shift'].includes(key) && mode === 'playing') e.preventDefault();
+  if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' ','Tab','Control','Shift'].includes(key) && mode() === 'playing') e.preventDefault();
   if (!e.repeat) {
     if (key === 'Escape' || key === 'p') { e.preventDefault(); pauseGame(); }
     if (key === 'h') showDialog('help');
     if (key === 'c') setView(view === 'chase' ? 'cockpit' : 'chase');
     if (key === '1') setWeapon('MSL'); if (key === '2') setWeapon('GUN');
-    if (key === 'Tab' && mode === 'playing') cycleTarget();
+    if (key === 'Tab' && mode() === 'playing') cycleTarget();
     if (key === 'f') deployFlares();
   }
   keys.add(key);
 });
 window.addEventListener('keyup', (e) => keys.delete(e.key.length === 1 ? e.key.toLowerCase() : e.key));
-window.addEventListener('blur', () => { keys.clear(); if (mode === 'playing') pauseGame(); });
-document.addEventListener('visibilitychange', () => { if (document.hidden && mode === 'playing') pauseGame(); });
+window.addEventListener('blur', () => { keys.clear(); if (mode() === 'playing') pauseGame(); });
+document.addEventListener('visibilitychange', () => { if (document.hidden && mode() === 'playing') pauseGame(); });
 document.querySelectorAll('[data-key]').forEach(button => {
   button.addEventListener('pointerdown', e => { e.preventDefault(); button.setPointerCapture(e.pointerId); keys.add(button.dataset.key); });
   button.addEventListener('pointerup', () => keys.delete(button.dataset.key));
@@ -422,4 +461,12 @@ $('touch-fire').onpointerup = () => keys.delete(' '); $('touch-fire').onpointerc
 $('touch-target').onclick = cycleTarget;
 
 // A read-only snapshot helps verify flight controls and mission state in the browser.
-window.__flight = { getState: () => ({ mode, view, weapon, elapsed, score, kills, locked: lockTime >= .65, target: selectedTarget()?.name, targetPosition: selectedTarget()?.mesh.position.toArray(), position: player.position.toArray(), heading:player.heading, pitch:player.pitch, speed:player.speed, health:player.health, missiles:player.missiles, flares:player.flares, activeProjectiles:projectiles.length, enemies:enemies.filter(e=>e.alive).length }) };
+window.__flight = Object.freeze({ getState: () => ({
+  ...director.getSnapshot(), mode: mode(), view, weapon, kills: run.totalKills,
+  locked: lockTime >= .65, target: selectedTarget()?.name, targetId: selectedTarget()?.id,
+  targetPosition: selectedTarget()?.mesh.position.toArray(), position: player.position.toArray(),
+  heading: player.heading, pitch: player.pitch, roll: player.roll, throttle: player.throttle,
+  speed: player.speed, health: player.health, missiles: player.missiles, flares: player.flares,
+  activeProjectiles: projectiles.length, enemies: enemies.filter(e => e.alive).length,
+  incoming, warning: currentWarning,
+}) });
