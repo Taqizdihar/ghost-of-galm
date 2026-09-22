@@ -1,0 +1,1520 @@
+# Ghost of Galm — Master Development Context
+
+This document is the persistent source of truth for AI coding agents working on the **Ghost of Galm** repository.
+
+Read this file in full before analyzing, editing, refactoring, generating, or deleting project code.
+
+This document exists because development may continue across multiple AI-agent sessions with different chat histories. Do not rely on previous chat context being available. Treat the repository and this document as authoritative unless the user explicitly provides newer instructions.
+
+---
+
+# 1. Project Identity
+
+**Project name:** Ghost of Galm
+
+Ghost of Galm is a browser-based aerial combat game inspired by arcade-style combat flight games.
+
+The current project began as a small but playable aerial-combat prototype and will be expanded into an endless-round game featuring:
+
+- player-controlled combat aircraft,
+- selectable enemy encounters,
+- elite squadrons,
+- boss encounters,
+- a persistent AI-controlled wingman,
+- selectable player and wingman aircraft,
+- inter-round hangar access,
+- text conversation with the wingman,
+- voice conversation with the wingman,
+- speech-to-text for player microphone input,
+- cloned-voice text-to-speech for the wingman,
+- contextual wingman personality and lore,
+- increasingly advanced combat AI.
+
+The project should evolve incrementally from the current working prototype.
+
+Do **not** replace the project with a new game architecture unless explicitly instructed.
+
+---
+
+# 2. Repository and Git Policy
+
+The repository is:
+
+`ghost-of-galm`
+
+Development must currently remain on:
+
+`main`
+
+## Mandatory Git rules
+
+- Stay on the `main` branch.
+- Do not create a new branch unless the user explicitly requests one.
+- Do not automatically switch branches.
+- Do not create feature branches based only on general best practices.
+- Do not rebase, squash, reset, force-push, or rewrite Git history unless explicitly requested.
+- Do not push changes to the remote repository unless explicitly requested.
+- Do not delete repository history.
+- Preserve existing files unless there is a clear architectural reason to refactor them.
+- Prefer incremental edits over destructive rewrites.
+
+If a future instruction explicitly authorizes a new branch, that newer instruction overrides the branch rule above.
+
+---
+
+# 3. Current Technology Stack
+
+The current project intentionally uses a small dependency footprint.
+
+Core stack:
+
+- JavaScript ES modules
+- Three.js
+- Vite
+- HTML
+- CSS
+- Web Audio API
+
+Current package dependencies are intentionally minimal.
+
+Do not introduce a frontend framework such as:
+
+- React
+- Vue
+- Svelte
+- Angular
+
+unless explicitly instructed.
+
+Do not replace Three.js.
+
+Do not replace Vite.
+
+Avoid adding large dependencies when equivalent functionality can reasonably be implemented using the current stack.
+
+Any new dependency must have a clear technical justification.
+
+---
+
+# 4. Current Baseline Project Structure
+
+The existing source currently includes these major files:
+
+```text
+src/
+├── main.js
+├── world.js
+├── hud.js
+├── audio.js
+└── style.css
+
+Other important project files include:
+
+index.html
+package.json
+package-lock.json
+README.md
+docs/
+public/
+
+Current responsibilities are approximately:
+
+src/main.js
+
+Currently contains a large amount of game logic, including:
+
+initial UI markup,
+game initialization,
+player state,
+player controls,
+camera behavior,
+weapon handling,
+missile handling,
+cannon handling,
+flare handling,
+enemy spawning,
+basic enemy movement,
+mission lifecycle,
+mission state,
+target selection,
+score,
+combat effects,
+dialogs,
+pause handling,
+HUD-state preparation,
+render/update loop.
+
+This file currently carries too many responsibilities and is expected to be incrementally decomposed as development progresses.
+
+Do not rewrite it from scratch.
+
+src/world.js
+
+Currently handles much of the generated 3D world, including:
+
+terrain,
+coastline,
+ocean,
+sky,
+clouds,
+lighting,
+procedural aircraft geometry,
+world/environment updates,
+an existing coastal airfield and hangar structures.
+
+The existing environment should be preserved unless a future task explicitly changes it.
+
+src/hud.js
+
+Currently contains:
+
+primary flight HUD rendering,
+heading display,
+pitch ladder,
+speed,
+altitude,
+target projection,
+warning display,
+tactical radar drawing.
+
+The HUD is already relatively well separated because it receives a state object.
+
+Preserve this pattern.
+
+src/audio.js
+
+Currently uses Web Audio API for procedural/local flight audio such as:
+
+engine sound,
+missile effects,
+cannon,
+lock tone,
+warnings,
+impacts,
+destruction,
+victory sound,
+UI click sounds.
+
+Future TTS should extend the audio architecture rather than replacing the existing procedural flight audio.
+
+src/style.css
+
+Contains current UI styling and responsive game presentation.
+
+Preserve the existing visual identity unless explicitly instructed otherwise.
+
+5. Existing Gameplay Baseline
+
+The current game already provides working gameplay that must be treated as valuable existing functionality.
+
+The prototype currently includes:
+
+launchable sortie,
+player-controlled combat aircraft,
+chase camera,
+cockpit camera,
+pitch control,
+roll/turn control,
+rudder control,
+afterburner,
+air brake,
+missile weapon,
+cannon weapon,
+target cycling,
+missile lock behavior,
+flares,
+incoming missile warning,
+health,
+score,
+procedural terrain,
+terrain collision,
+ocean,
+clouds,
+radar,
+HUD speed display,
+HUD altitude display,
+weapons UI,
+pause dialog,
+help/controls dialog,
+keyboard controls,
+touch controls,
+synthesized flight/combat audio,
+sound mute/unmute,
+fullscreen handling.
+
+Existing working behavior should not be removed merely to simplify refactoring.
+
+6. Current Mission Limitation
+
+The current game is still based on a single fixed encounter.
+
+At the current baseline:
+
+approximately six enemies are spawned,
+enemy types are currently hard-coded,
+enemy positions are mostly hard-coded,
+winning is effectively tied to destroying the fixed group,
+after mission completion the player can repeat the sortie,
+the game does not yet have persistent endless rounds,
+there is no wingman entity yet,
+there is no hangar workflow yet,
+there is no conversational AI yet.
+
+Some parts of the current code assume a fixed enemy count of six.
+
+Those assumptions must gradually be removed.
+
+A completed round must eventually be determined by whether all enemies in the current encounter have been destroyed, not by a hard-coded kill number.
+
+7. Long-Term Game Loop
+
+The intended core gameplay loop is:
+
+START
+  ↓
+AIRCRAFT SELECTION
+  ↓
+WINGMAN AIRCRAFT SELECTION
+  ↓
+SORTIE
+  ↓
+ROUND
+  ↓
+ROUND CLEARED
+  ↓
+INTERMISSION
+  ├── SELECT NEXT ENCOUNTER
+  ├── CONTINUE SORTIE
+  ├── RETURN TO HANGAR
+  └── TALK TO WINGMAN
+          ↓
+     NEXT ROUND
+          ↓
+        ...
+      ENDLESS
+
+Player destruction ends the current run.
+
+The number of rounds has no predefined final limit.
+
+Boss fights and elite encounters are special encounter choices inside the endless structure rather than a traditional fixed campaign ending.
+
+8. Intended Game State Model
+
+The current simple state model should gradually evolve toward a clearer state machine.
+
+Desired high-level phases include:
+
+READY
+COMBAT
+ROUND_CLEAR
+INTERMISSION
+HANGAR
+GAME_OVER
+
+Pause should preferably behave as an overlay or temporary suspension state rather than being confused with mission progression.
+
+Future implementation may introduce additional internal sub-states if technically useful.
+
+Avoid uncontrolled collections of unrelated boolean flags when a clearer game-state model is possible.
+
+9. Development Roadmap
+
+The long-term roadmap is divided into ten milestones.
+
+M1 — Architecture Foundation
+
+Goals:
+
+reduce excessive responsibility in main.js,
+introduce clearer game-state ownership,
+introduce reusable modules,
+introduce a lightweight game-event mechanism where helpful,
+prepare code for future endless rounds,
+preserve current gameplay behavior.
+
+Possible future modules may include:
+
+src/
+├── game/
+│   ├── state.js
+│   ├── events.js
+│   ├── round-director.js
+│   └── encounters.js
+│
+├── combat/
+│   ├── enemies.js
+│   ├── projectiles.js
+│   └── weapons.js
+│
+├── aircraft/
+│   ├── catalog.js
+│   └── wingman.js
+│
+├── comms/
+│   ├── comms.js
+│   └── wingman-client.js
+│
+└── ui/
+    ├── intermission.js
+    └── hangar.js
+
+This structure is a direction, not an absolute requirement.
+
+Do not create unnecessary abstraction simply to match this example.
+
+M2 — Endless Round Core
+
+Goals:
+
+introduce persistent run state,
+introduce round numbering,
+replace fixed one-mission completion behavior,
+preserve score between rounds,
+track current-round and total progress separately,
+complete a round when the current encounter has no living enemies,
+prepare progression for unlimited rounds.
+
+A run state may eventually track information such as:
+
+round
+score
+roundKills
+totalKills
+playerKills
+wingmanKills
+currentEncounter
+playerAircraft
+wingmanAircraft
+
+Do not assume all kills belong to the player because future wingman kills must count toward encounter completion.
+
+M3 — Encounter Selection
+
+Goals:
+
+introduce data-driven enemy encounters,
+allow different enemy counts and compositions,
+present encounter choices between rounds,
+support normal encounters,
+support elite encounters,
+support boss encounters,
+avoid hard-coded six-enemy assumptions.
+
+Examples of encounter categories:
+
+STANDARD
+ELITE
+BOSS
+
+Difficulty should not scale purely by endlessly increasing enemy quantity.
+
+Difficulty may later scale through:
+
+AI quality,
+aggression,
+accuracy,
+turn performance,
+missile frequency,
+missile quality,
+enemy composition,
+elite mechanics,
+boss mechanics.
+M4 — Wingman Flight and Combat AI
+
+Goals:
+
+add one persistent friendly aircraft,
+create wingman formation behavior,
+create combat engagement behavior,
+create regroup behavior,
+create evasive behavior,
+allow wingman kills,
+display wingman on radar,
+allow enemies to target either player or wingman.
+
+The wingman flight brain must be deterministic/local gameplay code.
+
+Do not use an LLM to control frame-by-frame aircraft movement.
+
+A possible initial finite state machine:
+
+FORMATION
+ENGAGE
+EVADE
+REGROUP
+M5 — Hangar and Aircraft Selection
+
+Goals:
+
+allow player aircraft selection,
+allow wingman aircraft selection,
+allow aircraft changes before sortie,
+allow returning to hangar between rounds,
+retain run progression where intended.
+
+A physical runway landing simulation is not required for the first hangar implementation.
+
+A transition/fade to a hangar interface is acceptable.
+
+Physical landing mechanics may be implemented later.
+
+M6 — Wingman Text Conversation
+
+Goals:
+
+allow the player to type messages to the wingman,
+introduce an LLM-backed character layer,
+provide the wingman with personality/lore,
+provide the LLM with relevant game-state context,
+preserve conversation context where appropriate.
+
+Gameplay must continue to function even if conversational AI is unavailable.
+
+M7 — Wingman Text-to-Speech
+
+Current intended TTS direction:
+
+Chatterbox-Turbo
+
+Primary requirements:
+
+English speech,
+zero-shot voice cloning,
+low-latency conversational output,
+expressive voice capability,
+self-hosted/free development workflow where practical.
+
+The wingman voice will use a reference voice provided with the speaker's explicit permission.
+
+Reference voice recordings must not be committed to a public repository unless explicitly approved.
+
+Private voice assets should remain outside publicly served client assets.
+
+TTS should normally run in a backend/service layer, not inside the main Three.js browser render loop.
+
+M8 — Player Voice / Speech-to-Text
+
+Goals:
+
+microphone support,
+push-to-talk or similar interaction,
+speech-to-text,
+forward transcription to the wingman conversational AI,
+receive TTS response.
+
+Microphone permissions and failure handling must be graceful.
+
+M9 — Advanced Combat AI
+
+Goals may include:
+
+pursuit,
+attack behavior,
+defensive breaks,
+missile firing,
+missile evasion,
+target prioritization,
+formation behavior,
+elite behavior,
+boss phases,
+improved interaction with the wingman.
+
+Avoid requiring LLM inference for real-time combat behavior.
+
+M10 — Polish and Persistence
+
+Potential goals:
+
+run persistence,
+configuration persistence,
+balancing,
+relationship state,
+wingman memory,
+improved audio mixing,
+improved UI,
+accessibility,
+performance profiling,
+loading optimization,
+visual polish.
+10. Current Active Development Scope
+
+Unless a newer instruction explicitly overrides this section, the current active implementation scope is:
+
+M1 — Architecture Foundation
+M2 — Endless Round Core
+M3 — Encounter Selection
+
+Do not implement M4 through M10 yet.
+
+However, architecture created during M1–M3 should avoid making M4–M10 unnecessarily difficult.
+
+In particular, early architecture should anticipate:
+
+a future wingman entity,
+kills from both player and wingman,
+selectable aircraft,
+hangar state,
+LLM-readable game-state snapshots,
+TTS audio,
+dynamic encounter types.
+
+The agent may create interfaces or extensible data structures that help later milestones, but must not prematurely implement future systems.
+
+11. M1–M3 Success Criteria
+
+The first development batch should be considered successful when the following behavior works reliably:
+
+Launch Game
+    ↓
+Round 1
+    ↓
+Destroy all current enemies
+    ↓
+Round Clear
+    ↓
+Intermission
+    ↓
+Choose next encounter
+    ↓
+Round 2
+    ↓
+Repeat indefinitely
+
+Expected properties:
+
+existing flight controls still work,
+existing chase camera still works,
+existing cockpit camera still works,
+HUD remains functional,
+radar remains functional,
+missile lock still works,
+missile firing still works,
+cannon still works,
+flares still work,
+terrain collision still works,
+pause still works,
+help/controls UI still works,
+touch controls still work,
+sound controls still work,
+fullscreen still works,
+completing an encounter does not terminate a successful run,
+round number increments correctly,
+score persists across rounds,
+enemy counts can vary,
+encounter definitions are data-driven,
+current encounter progress is not hard-coded to six,
+player destruction still ends the run,
+no wingman combat implementation is required yet,
+no LLM implementation is required yet,
+no TTS implementation is required yet.
+12. Encounter Design Principles
+
+Encounters should be data-driven rather than scattered through conditional logic.
+
+A conceptual encounter definition may contain information such as:
+
+{
+    id: 'border_patrol',
+    category: 'standard',
+    title: 'BORDER PATROL',
+    enemies: [
+        {
+            aircraft: 'MIG-29',
+            count: 3,
+            ai: 'standard'
+        },
+        {
+            aircraft: 'SU-27',
+            count: 2,
+            ai: 'standard'
+        }
+    ],
+    rewardMultiplier: 1.0
+}
+
+This is an example, not a mandatory schema.
+
+The implementation may use another clean schema if justified.
+
+The important requirement is that enemy composition should not remain hard-coded inside one reset function.
+
+13. Enemy and Kill Ownership
+
+Future combat will include player kills and wingman kills.
+
+Therefore avoid designs that assume:
+
+round completion = player kill count
+
+Round completion should eventually be based on something equivalent to:
+
+no living enemies remain in the current encounter
+
+Kill ownership should be representable.
+
+Examples:
+
+player
+wingman
+environment
+other future source
+
+Do not couple the score system so tightly to player-only kills that future wingman integration requires a major rewrite.
+
+14. Wingman Gameplay Architecture
+
+The future wingman consists of two conceptually separate systems.
+
+WINGMAN
+├── GAMEPLAY BRAIN
+└── CHARACTER BRAIN
+Gameplay Brain
+
+Runs in deterministic/local game code.
+
+Responsible for:
+
+flying,
+formation,
+combat,
+targeting,
+firing,
+evasion,
+regrouping,
+tactical behavior.
+Character Brain
+
+Runs through conversational AI.
+
+Responsible for:
+
+personality,
+dialogue,
+lore,
+discussion,
+contextual reactions,
+player conversation.
+
+The LLM must not directly control frame-by-frame flight physics.
+
+The conversational layer may eventually request high-level intentions such as:
+
+engage target
+regroup
+cover player
+hold formation
+
+but the local gameplay AI must validate and execute them.
+
+15. Tactical Dialogue vs Conversational Dialogue
+
+Do not send every combat line to an LLM.
+
+Future communication should distinguish:
+
+TACTICAL COMMS
+
+from:
+
+CONVERSATIONAL AI
+
+Tactical messages such as:
+
+"Fox Two."
+"Missile!"
+"Break right!"
+"I'm hit!"
+"Target destroyed."
+"Regrouping."
+
+should be able to originate directly from deterministic game events.
+
+Conversation that requires personality, memory, interpretation, or free-form player input may use the LLM.
+
+This separation is important for:
+
+latency,
+reliability,
+offline fallback,
+consistent gameplay timing.
+16. Comms System Direction
+
+The project currently has simple radio text behavior.
+
+Future implementation should gradually move toward a reusable comms manager concept capable of representing:
+
+speaker
+text
+priority
+duration
+source
+optional audio
+
+Potential speakers include:
+
+AWACS
+GALM 1
+GALM 2
+ENEMY
+SYSTEM
+
+Do not tightly bind future radio communication to one hard-coded DOM text replacement.
+
+17. AI Game-State Snapshot
+
+The existing prototype already exposes a read-only flight-state snapshot for debugging.
+
+Future development should preserve the general idea of having one reusable function capable of generating a clean game-state snapshot.
+
+The same snapshot concept may later support:
+
+debugging,
+automated testing,
+LLM context,
+telemetry,
+save systems.
+
+A future snapshot may contain:
+
+phase
+round
+score
+player
+wingman
+currentEncounter
+remainingEnemies
+currentTarget
+threats
+weapons
+aircraft health
+
+Do not expose unnecessary internal implementation details to external AI services.
+
+18. Wingman Aircraft Assets
+
+The future wingman is expected to have two selectable aircraft models.
+
+These models are expected to be GLB/glTF assets.
+
+Current known approximate model information:
+
+Wingman Aircraft Model A
+
+Approximate characteristics:
+
+File size: ~6.6 MB
+Triangles: ~4,082
+
+The geometry is very lightweight.
+
+The comparatively larger file size may primarily come from textures/material assets rather than polygon count.
+
+Wingman Aircraft Model B
+
+Approximate characteristics:
+
+File size: ~255 KB
+Triangles: ~29,414
+
+The triangle count is still reasonable for a single active wingman aircraft in a Three.js game.
+
+The small file size suggests efficient asset storage and/or minimal texture overhead.
+
+Additional information about materials, textures, texture resolution, nodes, animations, and draw calls may be provided later.
+
+Do not assume either model must be recreated procedurally.
+
+Current preferred strategy is:
+
+use optimized GLB directly
+
+unless profiling later demonstrates a real problem.
+
+19. GLB and Procedural Aircraft Coexistence
+
+Player aircraft may continue to use procedural Three.js geometry.
+
+Wingman aircraft may use GLB assets.
+
+This mixed approach is acceptable.
+
+Gameplay code should ideally treat both as aircraft objects without needing to know whether their visual model originated from:
+
+procedural geometry
+
+or:
+
+GLTFLoader
+
+A future aircraft abstraction may use a concept such as:
+
+type: procedural
+
+or:
+
+type: gltf
+
+without exposing asset-loading differences to combat logic.
+
+20. Aircraft Asset Loading Strategy
+
+Do not automatically keep all aircraft models active in the gameplay scene.
+
+Preferred behavior:
+
+player selects aircraft
+        ↓
+load selected aircraft
+        ↓
+use selected aircraft during sortie
+
+Inactive aircraft do not need to remain rendered.
+
+Selection menus may use static previews/thumbnails when appropriate.
+
+Only load full 3D assets where needed.
+
+21. Aircraft Scale and Coordinate Consistency
+
+External GLB files may have inconsistent export units, axis orientation, pivot points, or scale metadata.
+
+Do not scatter arbitrary scale corrections throughout gameplay code.
+
+Use centralized aircraft asset configuration where practical.
+
+A future definition may include properties such as:
+
+model path
+scale
+rotation correction
+position offset
+collision radius
+display name
+
+The project should preferably use a consistent world-scale convention.
+
+A reasonable convention is:
+
+1 Three.js world unit ≈ 1 meter
+
+unless existing game scale makes another approach clearly preferable.
+
+22. GLB "Open Edge" Warnings
+
+External model inspection tools may report that aircraft meshes contain open edges or are not watertight.
+
+This is primarily a 3D-printing concern.
+
+A game asset does not need to be a watertight printable solid.
+
+Do not automatically repair GLB geometry merely because a slicer or 3D-printing inspection tool reports open surfaces.
+
+For game use, more relevant checks include:
+
+correct appearance,
+correct normals,
+correct material display,
+correct UVs,
+acceptable backface behavior,
+expected pivot/orientation,
+acceptable draw-call count,
+acceptable runtime performance.
+23. Performance Philosophy
+
+Do not prematurely optimize based only on assumptions.
+
+Measure real performance where possible.
+
+Important metrics include:
+
+frame time,
+FPS,
+draw calls,
+triangles,
+texture memory,
+shader complexity,
+loading time,
+garbage collection,
+entity count,
+particle count.
+
+Triangle count alone is not sufficient to judge model performance.
+
+For future aircraft assets, also consider:
+
+number of meshes,
+number of materials,
+texture resolution,
+transparency,
+animation,
+skinning,
+compression.
+
+Avoid unnecessary model reconstruction if the original optimized GLB performs well.
+
+24. Future Asset Optimization
+
+If optimization becomes necessary, preferred techniques may include:
+
+Meshopt compression,
+Draco compression where appropriate,
+KTX2/Basis texture compression,
+texture resolution reduction,
+removing unused materials,
+removing unused animation tracks,
+removing hidden geometry,
+merging compatible materials,
+reducing draw calls,
+level of detail where justified.
+
+Do not optimize destructively without first validating the visual result.
+
+25. Future Wingman TTS Architecture
+
+The current preferred direction for wingman voice synthesis is:
+
+Chatterbox-Turbo
+
+The game should not assume that a heavy TTS model runs directly inside the browser.
+
+Preferred conceptual architecture:
+
+Browser Game
+    │
+    ├── Three.js
+    ├── gameplay
+    ├── HUD
+    ├── Web Audio
+    │
+    ▼
+AI / Voice Backend
+    ├── LLM
+    ├── STT
+    └── Chatterbox-Turbo
+           │
+           ▼
+      audio response
+           │
+           ▼
+        Browser
+
+The game must remain playable if the external AI service is unavailable.
+
+26. Voice Asset Privacy
+
+The wingman voice may be cloned from a real person who has explicitly consented.
+
+Even with consent:
+
+do not automatically place raw reference audio in public client assets,
+do not commit private reference recordings unless explicitly instructed,
+do not expose reference audio through the public game bundle,
+prefer server-side/private storage for voice references.
+
+A future .gitignore rule may protect private voice assets.
+
+Do not invent a private-asset path until the backend structure is actually introduced.
+
+27. Audio Mixing Direction
+
+Future voice audio should coexist with the existing Web Audio flight system.
+
+Do not replace existing engine/combat sounds with the TTS subsystem.
+
+A future mixer may conceptually contain:
+
+master
+├── engine
+├── effects
+├── UI
+└── voice
+
+When voice communication plays, flight audio may optionally be ducked slightly.
+
+The exact implementation should be driven by testing.
+
+28. AI Lore and Character System
+
+The future wingman will have a persistent fictional identity and personality.
+
+The character system may eventually use:
+
+system instructions,
+lorebook,
+relationship state,
+current run state,
+mission history,
+selected aircraft,
+combat events,
+player conversation history.
+
+During combat, dialogue should remain concise.
+
+During hangar/intermission states, longer conversational responses are acceptable.
+
+The AI must not fabricate game events when authoritative game-state data is available.
+
+29. Combat AI Direction
+
+The current enemies use intentionally simple prototype behavior.
+
+Future enemy AI should gradually evolve toward reusable combat states such as:
+
+PATROL
+PURSUIT
+ATTACK
+BREAK
+EVADE
+REGROUP
+
+Difficulty should preferably come from AI parameters rather than entirely separate duplicated systems.
+
+Potential parameters include:
+
+aggression
+turnRate
+missileSkill
+accuracy
+reactionTime
+evasionSkill
+formationBehavior
+
+Elite and boss aircraft may extend the same underlying combat architecture.
+
+Do not implement this full system during M1–M3 unless explicitly requested.
+
+30. Game Events
+
+A lightweight event-based architecture may be introduced when it reduces coupling.
+
+Potential events include:
+
+enemyDestroyed
+playerDamaged
+wingmanDamaged
+missileInbound
+roundStarted
+roundCleared
+encounterSelected
+bossSpawned
+aircraftChanged
+playerDestroyed
+
+Do not introduce an unnecessarily complex external event library.
+
+Native browser events or a small custom event system may be sufficient.
+
+Use events where they genuinely improve separation of responsibilities.
+
+31. Data-Driven Design
+
+Prefer data definitions over large collections of hard-coded conditions.
+
+Good candidates for data-driven definitions include:
+
+aircraft catalog,
+encounter catalog,
+enemy archetypes,
+difficulty parameters,
+wingman aircraft choices,
+future boss definitions.
+
+Do not over-engineer schemas before actual requirements exist.
+
+The schema should remain understandable and easy to edit.
+
+32. UI and Visual Identity
+
+Preserve the current visual identity of Ghost of Galm.
+
+Do not replace the interface with generic framework components.
+
+New UI such as:
+
+intermission encounter cards,
+round information,
+hangar selection,
+wingman chat,
+
+should visually fit the current game presentation.
+
+The current aesthetic includes:
+
+military/tactical HUD styling,
+restrained typography,
+green/amber tactical displays,
+mission-operation language,
+compact instrumentation.
+
+New screens should feel like part of the same application.
+
+33. Intermission UX Direction
+
+After a round is cleared, the player should eventually receive a selection interface rather than immediately ending the successful run.
+
+A conceptual flow:
+
+ROUND 12 CLEARED
+
+SELECT NEXT ENGAGEMENT
+
+[ STANDARD ]
+[ ELITE    ]
+[ BOSS     ]
+
+CONTINUE SORTIE
+RETURN TO HANGAR
+
+The final UI design may differ.
+
+Do not hard-code the interface around exactly three choices if a flexible implementation is similarly simple.
+
+34. Hangar UX Direction
+
+The hangar should eventually allow:
+
+player aircraft selection,
+wingman aircraft selection,
+viewing aircraft information,
+changing aircraft between rounds,
+accessing conversation with the wingman.
+
+The existing procedural airfield in the world may later support a physical return-to-base mechanic.
+
+Do not require physical landing simulation for the initial hangar implementation.
+
+35. Browser Reliability
+
+The browser game must degrade gracefully.
+
+Failures in optional systems should not crash core gameplay.
+
+Examples:
+
+audio device unavailable,
+microphone denied,
+LLM backend offline,
+TTS backend offline,
+voice synthesis error.
+
+Core flight/combat gameplay should continue where possible.
+
+36. Input Preservation
+
+Existing controls must not be unintentionally changed.
+
+Current gameplay uses keyboard controls including:
+
+W / Up Arrow
+S / Down Arrow
+A / D
+Left / Right Arrow
+Q / E
+Shift
+B
+Space
+Tab
+1 / 2
+F
+C
+Esc / P
+H
+
+Touch controls also exist.
+
+Do not repurpose existing keys without explicit instruction.
+
+Future chat or push-to-talk controls must avoid interfering with flight input.
+
+37. Testing Philosophy
+
+Every significant implementation should be tested at the level appropriate to the change.
+
+At minimum:
+
+run the development build,
+run the production build,
+check browser console errors,
+validate important gameplay flows.
+
+For the first development batch, manually verify:
+
+launch
+fly
+target
+lock
+fire missile
+fire cannon
+use flares
+switch camera
+pause
+resume
+destroy encounter
+enter intermission
+choose encounter
+start next round
+repeat for multiple rounds
+die / game over
+
+If automated tests are introduced, keep them focused and maintainable.
+
+Do not create large test frameworks solely for trivial coverage.
+
+38. Build Validation
+
+Before considering implementation complete:
+
+npm install
+npm run build
+
+must succeed unless an external environment limitation prevents it.
+
+If the build fails, diagnose and fix the project error before declaring completion.
+
+Do not suppress build errors without understanding them.
+
+39. Code Quality Expectations
+
+Prefer:
+
+clear module ownership,
+descriptive names,
+small focused functions,
+explicit state transitions,
+data-driven definitions,
+reusable helpers,
+comments explaining non-obvious decisions.
+
+Avoid:
+
+unnecessary classes,
+deep inheritance,
+giant utility files,
+duplicate state,
+duplicated constants,
+hidden global mutation,
+premature abstraction,
+speculative systems for requirements that do not yet exist.
+
+The code should remain approachable to a human developer.
+
+40. Refactoring Rules
+
+When refactoring:
+
+preserve existing behavior first,
+move code before redesigning code when practical,
+make changes in understandable increments,
+avoid changing visuals and gameplay simultaneously unless necessary,
+validate after meaningful steps.
+
+Do not use a refactor as justification for unrelated feature changes.
+
+41. No Rewrite Rule
+
+The existing game is the foundation.
+
+Do not respond to architectural complexity by rebuilding Ghost of Galm from scratch.
+
+Do not create a parallel replacement application.
+
+Do not replace working systems merely because another implementation would be personally preferred.
+
+Refactor the existing project incrementally.
+
+42. Scope Discipline
+
+Before modifying code, identify the current requested milestone or task.
+
+Implement only what is necessary for that task plus reasonable architectural support.
+
+Do not opportunistically implement unrelated future features.
+
+Example:
+
+If current scope is M1–M3:
+
+Allowed:
+
+prepare encounter schema
+prepare kill ownership
+prepare game snapshot structure
+prepare aircraft abstraction boundary
+
+Not allowed unless explicitly requested:
+
+implement LLM API
+install Chatterbox
+implement microphone STT
+build full hangar
+implement wingman combat
+build boss phase system
+
+Future-ready architecture is encouraged.
+
+Premature feature implementation is not.
+
+43. Dependency Policy
+
+Before adding a dependency, ask:
+
+Is this functionality already available in Three.js, browser APIs, or existing project code?
+Will this dependency meaningfully reduce complexity?
+Is it maintained?
+Is its license appropriate?
+Does it significantly increase client bundle size?
+
+Do not install dependencies simply because they are popular.
+
+44. External Asset License Policy
+
+One future wingman aircraft may come from an external source with a free license.
+
+Before public distribution, verify the exact license terms.
+
+Potential requirements may include:
+
+attribution,
+author credit,
+license file,
+source link,
+commercial restrictions,
+redistribution restrictions,
+derivative-work conditions.
+
+Do not assume "free" automatically means unrestricted redistribution.
+
+Keep third-party attribution information documented once the exact asset license is known.
+
+45. Security and Secrets
+
+Never place secrets in frontend code.
+
+Do not commit:
+
+API keys,
+private tokens,
+private voice-reference assets,
+backend credentials,
+secret environment values.
+
+Frontend-visible environment values must be assumed public.
+
+LLM/TTS provider secrets belong on the backend.
+
+46. Future Backend
+
+The current game is primarily a static Vite/browser application.
+
+A backend may be introduced later for:
+
+LLM,
+TTS,
+STT,
+conversation memory,
+optional persistence.
+
+Do not introduce the backend prematurely during M1–M3 unless explicitly requested.
+
+When eventually introduced, keep gameplay simulation independent from backend availability.
+
+47. Performance Budget Philosophy
+
+The project targets a modern browser with WebGL support.
+
+Do not intentionally sacrifice visual fidelity without evidence of a performance problem.
+
+For a single wingman, approximately 30k triangles is currently considered reasonable.
+
+More important concerns include:
+
+excessive draw calls,
+high-resolution textures,
+too many materials,
+shader cost,
+excessive particles,
+uncontrolled entity creation,
+memory churn.
+
+Profile before performing aggressive asset simplification.
+
+48. Future Object Pooling
+
+The current prototype may create and dispose aircraft/effects directly.
+
+For the early game this is acceptable.
+
+For long endless runs, future optimization may consider:
+
+projectile pooling,
+particle pooling,
+enemy aircraft pooling,
+shared geometry,
+shared materials.
+
+Do not implement pooling prematurely unless profiling or repeated-round behavior indicates it is useful.
+
+49. Existing Read-Only Debug State
+
+Preserve or improve the concept of a read-only debug state exposed from the application.
+
+It is useful for:
+
+debugging,
+testing,
+future AI integration.
+
+Do not expose writable internal references that allow accidental mutation of simulation state.
+
+50. Agent Operating Procedure
+
+Before modifying the project, the AI agent should:
+
+Read this file completely.
+Inspect the repository structure.
+Inspect the files relevant to the requested task.
+Confirm the current branch is main.
+Do not create another branch unless explicitly instructed.
+Understand the current working behavior before editing.
+Identify the minimum set of files that need modification.
+Preserve unrelated working systems.
+Implement incrementally.
+Build and verify the result.
+Report what changed and any remaining limitations.
+
+Do not merely generate hypothetical code if the task explicitly asks for implementation.
+
+When implementation is requested, inspect the actual repository and work against the real current code.
+
+51. Handling Conflicts Between This Document and New Instructions
+
+This document is the persistent baseline.
+
+If the user later gives explicit instructions that conflict with this document, the newest explicit instruction wins for that task.
+
+Do not silently rewrite this master context based on assumptions.
+
+If project architecture has materially changed, update this document only when requested or when the current task explicitly includes documentation maintenance.
+
+52. Current Priority
+
+The immediate development priority is:
+
+M1 — Architecture Foundation
+M2 — Endless Round Core
+M3 — Encounter Selection
+
+The target outcome is a stable endless-round foundation that preserves the quality of the current flight prototype and prepares the project for future wingman gameplay, hangar selection, conversational AI, and voice systems.
+
+The project should become more modular without losing the simplicity that currently makes it easy to understand and run.
+
+53. Core Principle
+
+The guiding principle for Ghost of Galm development is:
+
+Preserve what already works, separate responsibilities carefully, make progression data-driven, and add future systems as modular layers rather than rewriting the game around them.
+
+The existing flight prototype is the foundation.
+
+Build on it.
