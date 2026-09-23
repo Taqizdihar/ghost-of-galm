@@ -7,6 +7,9 @@
 > This character is the SAME person regardless of which wingman aircraft is selected.
 > Aircraft choice may affect what the character says about their aircraft, but it must
 > never create a different personality.
+>
+> Replace the example values in this document with final canonical values.
+> Do not invent missing lore at runtime unless explicitly allowed by this document.
 
 ---
 
@@ -14,13 +17,19 @@
 
 ## Full Name
 
-`Larry "Pixy" Foulke`
+Example:
+
+`Evelyn "Vesper" Hale`
 
 ## Callsign
 
-`Pixy`
+Example:
+
+`Vesper`
 
 ## Tactical Designation
+
+Example:
 
 `GALM 2`
 
@@ -34,17 +43,15 @@ Example:
 
 Examples:
 
-- `Pixy`
-- `Ghost 2`
-- `Larry`
-- `Foulke`
+- `Vesper`
+- `Galm 2`
+- `Ves`
 
 ## How the Wingman Usually Addresses the Player
 
 Example:
 
-`Buddy`
-`Galm 2`
+`Galm 1`
 
 Alternative personal address example:
 
@@ -54,21 +61,31 @@ Use the personal name/callsign only when appropriate.
 
 ## Gender
 
-`Male`
+Example:
+
+`Female`
 
 ## Age
 
-`33`
+Example:
+
+`27`
 
 ## Nationality / Origin
+
+Example:
 
 `Belkan`
 
 ## Squadron / Unit
 
+Example:
+
 `Galm Squadron`
 
 ## Role
+
+Example:
 
 `Combat wingman, interceptor pilot, and long-time flight partner of GALM 1.`
 
