@@ -14,6 +14,8 @@ from server.context import ChatRequest, HistoryTurn, bounded_history
 from server.conversation import build_messages
 from server.lore import LOREBOOK_PATH, load_lorebook
 from server.providers.base import ProviderUnavailable
+from server.providers import create_provider
+from server.providers.gemini import GeminiProvider
 from server.providers.ollama import OllamaProvider
 
 
@@ -156,7 +158,7 @@ class OllamaTests(unittest.IsolatedAsyncioTestCase):
             self.assertNotIn('tools', body)
             return httpx.Response(200, json={'done': True, 'message': {
                 'thinking': 'private reasoning', 'content': '{"text":"Still here, Kid.","emotion":"calm"}'}})
-        provider = OllamaProvider(Settings(), httpx.MockTransport(transport))
+        provider = OllamaProvider(Settings(provider='ollama', model='qwen3:8b'), httpx.MockTransport(transport))
         result = await provider.generate(build_messages(ChatRequest.model_validate(payload()), load_lorebook()), max_tokens=160)
         self.assertNotIn('thinking', result)
         self.assertEqual(result['text'], 'Still here, Kid.')
@@ -168,6 +170,75 @@ class OllamaTests(unittest.IsolatedAsyncioTestCase):
             provider = OllamaProvider(Settings(), httpx.MockTransport(lambda _: httpx.Response(status, json=body)))
             with self.assertRaises(ProviderUnavailable):
                 await provider.generate([], max_tokens=100)
+
+
+class GeminiTests(unittest.IsolatedAsyncioTestCase):
+    def settings(self, **overrides):
+        values = {'provider': 'gemini', 'model': 'gemini-3.1-flash-lite', 'api_key': 'test-secret'}
+        values.update(overrides)
+        return Settings(**values)
+
+    async def test_gemini_provider_uses_server_key_and_structured_reply(self):
+        response_body = {
+            'candidates': [{
+                'finishReason': 'STOP',
+                'content': {'parts': [
+                    {'text': 'private reasoning', 'thought': True},
+                    {'text': '{"text":"Still here, Kid.","emotion":"focused"}'},
+                ]},
+            }],
+        }
+
+        def transport(request):
+            body = json.loads(request.content)
+            self.assertEqual(request.url.host, 'generativelanguage.googleapis.com')
+            self.assertEqual(request.url.path, '/v1beta/models/gemini-3.1-flash-lite:generateContent')
+            self.assertNotIn('key', request.url.params)
+            self.assertEqual(request.headers['x-goog-api-key'], 'test-secret')
+            self.assertNotIn('test-secret', request.content.decode())
+            self.assertIn(load_lorebook(), body['systemInstruction']['parts'][0]['text'])
+            self.assertEqual(body['contents'][0]['role'], 'user')
+            config = body['generationConfig']
+            self.assertEqual(config['maxOutputTokens'], 160)
+            self.assertEqual(config['thinkingConfig']['thinkingLevel'], 'minimal')
+            self.assertEqual(config['responseMimeType'], 'application/json')
+            self.assertEqual(config['responseJsonSchema']['properties']['emotion']['enum'], [
+                'calm', 'focused', 'urgent', 'concerned', 'amused', 'reflective', 'strained', 'relieved',
+            ])
+            return httpx.Response(200, json=response_body)
+
+        request = ChatRequest.model_validate(payload())
+        provider = GeminiProvider(self.settings(), httpx.MockTransport(transport))
+        result = await provider.generate(build_messages(request, load_lorebook()), max_tokens=160)
+        self.assertEqual(result, {'text': 'Still here, Kid.', 'emotion': 'focused'})
+
+    async def test_provider_selection_and_missing_key(self):
+        self.assertIsInstance(create_provider(self.settings()), GeminiProvider)
+        self.assertIsInstance(create_provider(Settings(provider='ollama')), OllamaProvider)
+        with self.assertRaises(ProviderUnavailable):
+            create_provider(self.settings(api_key=''))
+        with self.assertRaises(ProviderUnavailable):
+            create_provider(Settings(provider='unknown'))
+
+    async def test_gemini_errors_are_reduced_to_provider_unavailable(self):
+        cases = [
+            (429, {}),
+            (200, {'candidates': [{'finishReason': 'MAX_TOKENS', 'content': {'parts': []}}]}),
+            (200, {'candidates': [{'finishReason': 'SAFETY', 'content': {'parts': []}}]}),
+            (200, {'candidates': [{'finishReason': 'STOP', 'content': {'parts': [{'text': 'not json'}]}}]}),
+            (200, {'promptFeedback': {'blockReason': 'SAFETY'}}),
+        ]
+        for status, body in cases:
+            with self.subTest(status=status, body=body):
+                provider = GeminiProvider(
+                    self.settings(),
+                    httpx.MockTransport(lambda _, status=status, body=body: httpx.Response(status, json=body)),
+                )
+                with self.assertRaises(ProviderUnavailable):
+                    await provider.generate([
+                        {'role': 'system', 'content': 'Pixy system instructions'},
+                        {'role': 'user', 'content': 'Test request'},
+                    ], max_tokens=160)
 
 
 if __name__ == '__main__':

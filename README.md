@@ -49,8 +49,16 @@ of `python`. On macOS/Linux, activate with `source .venv/bin/activate` and use
 `cp .env.example .env`. Start the frontend separately with `npm install` then
 `npm run dev` (`npm.cmd` also works on Windows).
 
-Install and run [Ollama](https://ollama.com/download) separately, then download
-the configured model:
+By default, Pixy's conversation backend uses Gemini 3.1 Flash-Lite. Add your
+Google AI Studio key to the ignored `.env` file as `GEMINI_API_KEY=...`. The key
+is read only by Python on the backend and is never sent to browser code. Gemini
+receives the canonical lorebook, approved game context and bounded conversation
+history with each request. Free-tier quota and availability are controlled by
+Google; failures continue to show the existing comms-unavailable message.
+
+Ollama remains available as a local alternative. Install and run
+[Ollama](https://ollama.com/download) separately, then download the configured
+model:
 
 ```sh
 ollama pull qwen3:8b
@@ -58,13 +66,12 @@ ollama serve
 ```
 
 Run `ollama serve` only if Ollama is not already serving locally. Neither Ollama
-nor Qwen is bundled in the web build. The default server configuration is:
+nor Qwen is bundled in the web build. To use Ollama, select it in `.env`:
 
 ```dotenv
 WINGMAN_LLM_PROVIDER=ollama
 WINGMAN_LLM_MODEL=qwen3:8b
 WINGMAN_LLM_BASE_URL=http://127.0.0.1:11434
-WINGMAN_LLM_TIMEOUT_SECONDS=20
 ```
 
 Keep `.env` private; Git ignores it. Provider/model configuration never enters
@@ -74,6 +81,8 @@ for that endpoint; the backend is intended for local development, not public
 unauthenticated hosting. No wildcard CORS is enabled.
 
 `server/providers/base.py` defines the replaceable async provider interface.
+The Gemini adapter uses Google's [GenerateContent REST API](https://ai.google.dev/gemini-api/docs/generate-content/text-generation),
+server-side key authentication, constrained JSON output and minimal thinking.
 The Ollama adapter uses its documented [chat API](https://docs.ollama.com/api/chat),
 structured JSON, and disabled [thinking output](https://docs.ollama.com/capabilities/thinking).
 Only validated final dialogue is returned as `{text, mode, emotion}`; emotion is
