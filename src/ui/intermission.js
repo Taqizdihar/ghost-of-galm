@@ -13,7 +13,7 @@ export function renderIntermission(container, run, onContinue, onHangar, selecte
       </label>`).join('')}
     </fieldset>
     <button class="launch-button" id="dialog-primary">CONTINUE SORTIE →</button>
-    <button class="secondary-button" id="hangar-btn">HANGAR / CHANGE GALM 2</button>`;
+    <button class="secondary-button" id="hangar-btn">HANGAR / CHANGE PIXY</button>`;
   container.querySelector('#dialog-primary').onclick = () => {
     onContinue(container.querySelector('input[name="encounter"]:checked').value);
   };

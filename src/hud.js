@@ -348,7 +348,7 @@ export function drawRadar(canvas, state) {
     ctx.strokeStyle = '#83e5ff'; ctx.fillStyle = '#83e5ff'; ctx.globalAlpha = 1;
     ctx.beginPath(); ctx.moveTo(cx + x, cy + y - 5); ctx.lineTo(cx + x + 5, cy + y);
     ctx.lineTo(cx + x, cy + y + 5); ctx.lineTo(cx + x - 5, cy + y); ctx.closePath(); ctx.stroke();
-    label(ctx, '2', cx + x + 8, cy + y - 6, 'left', 8);
+    label(ctx, 'PX', cx + x + 8, cy + y - 6, 'left', 8);
   }
   ctx.restore();
   ctx.globalAlpha = 0.85;

@@ -119,6 +119,11 @@ M4–M5 add `src/aircraft/{catalog,assets,attachments,wingman}.js`,
 airframe stats/transforms/hardpoints; the wingman owns local AI/HP/weapon timers.
 Main integrates shared projectiles/damage with the existing RoundDirector.
 
+M6 adds `src/comms/{context,conversation,wingman-client}.js`,
+`src/ui/wingman-chat.{js,css}`, and the optional Python/FastAPI `server/`.
+Only the dedicated allowlisted context reaches the provider; the debug snapshot
+is never used as an LLM payload. The backend loads the unchanged canonical lorebook.
+
 Other important project files include:
 
 index.html
@@ -263,7 +268,8 @@ The initial Silent Tide encounter has six aircraft; subsequent encounters have
 variable compositions. Round completion checks living enemies independently of
 kill ownership. Score, aircraft condition and ammunition persist between rounds.
 Pause is separate from progression. Elite Flight and Heavy Contact are stat-only
-prototypes, not final Elite/Boss implementations. There is no conversational AI.
+prototypes, not final Elite/Boss implementations. M6 adds optional text conversation;
+flight and combat remain independent of the conversation service.
 
 7. Long-Term Game Loop
 
@@ -544,21 +550,30 @@ M1 — Architecture Foundation
 M2 — Endless Round Core
 M3 — Encounter Selection
 
-Current active implementation scope:
-
 M4 — Wingman Flight and Combat AI
 M5 — Hangar and Aircraft Selection
+
+Current active implementation scope:
+
+M6 — Wingman Text Conversation
+
+`docs/wingman/lorebook.md` is CANONICAL and authoritative for Larry "Pixy"
+Foulke. Read it in full before character/conversation work. AI agents must not
+rewrite or reinterpret its canon unless explicitly instructed. The current player
+is NOT Cipher and is NOT current-day Galm 1. Larry normally calls the player
+"Kid"; AWACS may use "Pilot 1". "Galm 2" is Larry's historical designation,
+not his current role. Current-operation UI uses PILOT 1 and PIXY.
 
 Also authorized: square 8 km tactical radar, manual missile lock (L and touch
 LOCK), and hold-to-view-rear (V). TAB remains hostile target selection only.
 The player aircraft remains the existing procedural F-15C.
 
 M4 and scoped M5 are implemented and verified; see `docs/m4-m5-validation.md`.
-The active scope remains their maintenance/tuning, not automatic M6+ development.
+Preserve their gameplay while implementing the optional M6 conversation layer.
 M5 intentionally has one fixed player aircraft, two selectable wingman aircraft,
 and provisional full-health replacement when changing to a different wingman.
 
-Do not implement M6–M10, final Elite/Boss behavior, physical landing, or additional
+Do not implement M7–M10, final Elite/Boss behavior, physical landing, or additional
 player aircraft. `boss_air-destroyer.glb` is a future special-enemy/Boss asset for
 M9: leave it untouched in the repository root; do not move, rename, modify or load it.
 
@@ -1193,7 +1208,7 @@ Operations modal. The chosen next encounter survives opening/cancelling hangar.
 Score, player condition/ammunition, and unchanged wingman HP/destruction/timers
 persist. Choosing a different wingman supplies a full-health replacement with
 fresh weapon timers. This is provisional; no economy or physical landing exists.
-GALM 1 is displayed as the fixed/current F-15C. Conversation remains future work.
+PILOT 1 is displayed as the fixed/current F-15C. M6 adds optional Pixy text chat.
 
 The hangar should eventually allow:
 
@@ -1428,11 +1443,16 @@ Frontend-visible environment values must be assumed public.
 
 LLM/TTS provider secrets belong on the backend.
 
-46. Future Backend
+46. Optional M6 Backend
 
 The current game is primarily a static Vite/browser application.
 
-A backend may be introduced later for:
+M6 introduces a local Python/FastAPI backend with a provider interface and an
+Ollama adapter (default `qwen3:8b`). Configuration stays in server environment
+variables. Short conversation history lives in browser memory; no database.
+The backend never controls gameplay. M7 TTS and M8 STT remain future work.
+
+Future backend extensions may support:
 
 LLM,
 TTS,
@@ -1524,9 +1544,10 @@ If project architecture has materially changed, update this document only when r
 
 52. Current Priority
 
-The immediate development priority is M4–M5 and their runtime validation.
-M1 — Architecture Foundation, M2 — Endless Round Core, and M3 — Encounter
-Selection are completed and must remain working.
+The immediate development priority is M6 — Wingman Text Conversation and its
+runtime validation. M1 — Architecture Foundation, M2 — Endless Round Core,
+M3 — Encounter Selection, M4 — Wingman Flight and Combat AI, and scoped
+M5 — Hangar and Aircraft Selection are completed and must remain working.
 
 The target outcome is a stable endless-round foundation that preserves the quality of the current flight prototype and prepares the project for future wingman gameplay, hangar selection, conversational AI, and voice systems.
 

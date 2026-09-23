@@ -1,0 +1,60 @@
+/* This sheet is imported after the base HUD styles by main.js. */
+.operations-panel {
+  position: absolute; top: 24px; left: 38px; width: 280px; z-index: 3;
+  display: flex; flex-direction: column; gap: 10px;
+  max-height: calc(100% - 285px); overflow-y: auto; scrollbar-width: thin;
+  scrollbar-color: #658579 #152c31;
+}
+.game .operations-panel .mission-panel {
+  position: static; width: 100%; flex-shrink: 0; transition: none; margin: 0;
+}
+.game .mission-intro { left: 355px; top: 45px; pointer-events: none; }
+.wingman-chat { padding: 12px; border: 1px solid #83e5ff55; background: #122930ed; color: #dae9df; }
+.chat-header { display: flex; align-items: center; gap: 10px; }
+.chat-avatar { width: 38px; height: 42px; border: 1px solid #83e5ff77; display: grid; place-items: center; color: #83e5ff; font: 16px var(--mono); flex-shrink: 0; background: repeating-linear-gradient(0deg, transparent 0 4px, #83e5ff08 4px 5px); }
+.chat-header strong { display: block; font: 13px var(--mono); letter-spacing: 2px; color: #83e5ff; }
+.chat-header span { display: block; font: 7px var(--mono); margin-top: 5px; }
+.chat-toggle { margin-left: auto; padding: 8px 4px; background: transparent; font: 8px var(--mono); color: var(--mint); }
+.chat-toggle kbd { font-size: 8px; min-width: 14px; }
+.chat-status { font: 8px/1.5 var(--mono); color: #a3b9ad; margin-top: 8px; overflow-wrap: anywhere; }
+.chat-status.interrupted { color: var(--orange); }
+.chat-player { color: #9eb4ac; border-left: 1px solid #879c9055; padding-left: 8px; max-height: 50px; overflow-y: auto; }
+.chat-player, .chat-response, .chat-preview { font: 12px/1.5 Arial, sans-serif; white-space: pre-wrap; overflow-wrap: anywhere; margin: 10px 0; }
+.chat-response { max-height: 160px; overflow-y: auto; }
+.chat-response:empty { display: none; }
+.chat-preview { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; cursor: pointer; }
+.chat-form label { display: block; font: 7px var(--mono); letter-spacing: 1px; margin: 12px 0 6px; }
+.chat-form textarea { resize: vertical; min-height: 48px; max-height: 110px; width: 100%; border: 1px solid #78998c; color: #e1eee6; background: #0b1e25; font: 13px/1.5 Arial, sans-serif; padding: 8px; }
+.chat-form textarea:focus { outline: 1px solid var(--orange); }
+.chat-actions { display: flex; align-items: center; gap: 8px; margin-top: 7px; }
+.chat-actions span { font: 6px var(--mono); color: #91a2a1; margin-right: auto; }
+.chat-actions button, .chat-reveal { padding: 7px; color: var(--mint); background: #25453e; font: 8px var(--mono); }
+.chat-reveal { margin-top: 0; }
+.wingman-chat.in-dialog { margin-top: 20px; }
+.in-dialog .chat-response { max-height: 240px; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+@media (max-width: 1150px) {
+  .operations-panel { left: 25px; width: 250px; }
+  .game .mission-intro { left: 305px; }
+}
+@media (max-width: 900px) {
+  .operations-panel { top: 16px; left: 20px; width: 230px; max-height: calc(100% - 245px); }
+  .game .mission-intro { left: 280px; top: 95px; }
+}
+@media (max-width: 650px) {
+  .operations-panel { top: 10px; left: 12px; width: 215px; max-height: calc(100% - 355px); }
+  .game .mission-intro { display: none; }
+  .wingman-chat { padding: 9px; }
+  .chat-header { gap: 7px; }
+  .chat-header span { font-size: 6px; }
+  .chat-avatar { width: 29px; height: 34px; font-size: 13px; }
+  .chat-form textarea { font-size: 16px; }
+  .chat-actions span { font-size: 5px; }
+  .game .operations-panel .mission-panel { padding: 10px; }
+  .game .operations-panel .mission-panel p { margin-bottom: 8px; }
+  .game .operations-panel .flight-active { flex-wrap: wrap; padding-top: 8px; }
+  .game .operations-panel .flight-active > span:last-child { margin-left: 0; }
+}
+@media (min-width: 651px) and (max-height: 660px) {
+  .operations-panel { max-height: calc(100% - 215px); }
+}

@@ -115,6 +115,9 @@ export class FlightAudio {
       this._lastPlayed.set(name, now);
 
       switch (name) {
+        case 'radio-static':
+          this._noise(0.22, 0.18, 2800, 900, 'bandpass');
+          break;
         case 'missile':
           this._noise(0.65, 0.6, 2300, 180, 'bandpass');
           this._tone(170, 65, 0.32, 0.08, 'triangle');

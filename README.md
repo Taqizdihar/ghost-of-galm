@@ -22,22 +22,139 @@ npm run preview
 
 The static production site is generated in `dist/`.
 
+## Optional Pixy text conversation (M6)
+
+Gameplay works with the conversation service offline. Chat lives at the upper
+left above the mission panel and is also accessible inside Flight Operations,
+intermission and pause/result dialogs. Press **Enter** from flight or click
+**CHAT**; **Enter** sends, **Shift+Enter** adds a newline, and **Escape** returns
+input to flight. Flight continues while typing; typing never fires weapons or
+activates flight shortcuts. **Tab** keeps its normal behavior inside chat.
+Replies animate over at most eight seconds; click the reply or **Reveal full
+message** to display it immediately. Reduced-motion preferences skip animation.
+The PX callsign frame is a placeholder, not a canonical portrait.
+
+In a second terminal, from the repository root (Python 3.11+):
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install -r server/requirements.txt
+Copy-Item .env.example .env
+python -m uvicorn server.app:app --host 127.0.0.1 --port 8000
+```
+
+If PowerShell blocks activation, use `.venv\Scripts\python.exe` directly instead
+of `python`. On macOS/Linux, activate with `source .venv/bin/activate` and use
+`cp .env.example .env`. Start the frontend separately with `npm install` then
+`npm run dev` (`npm.cmd` also works on Windows).
+
+Install and run [Ollama](https://ollama.com/download) separately, then download
+the configured model:
+
+```sh
+ollama pull qwen3:8b
+ollama serve
+```
+
+Run `ollama serve` only if Ollama is not already serving locally. Neither Ollama
+nor Qwen is bundled in the web build. The default server configuration is:
+
+```dotenv
+WINGMAN_LLM_PROVIDER=ollama
+WINGMAN_LLM_MODEL=qwen3:8b
+WINGMAN_LLM_BASE_URL=http://127.0.0.1:11434
+WINGMAN_LLM_TIMEOUT_SECONDS=20
+```
+
+Keep `.env` private; Git ignores it. Provider/model configuration never enters
+frontend code. Vite development and preview proxy `/api/wingman/chat` to port
+8000. A static production deployment needs its own same-origin reverse proxy
+for that endpoint; the backend is intended for local development, not public
+unauthenticated hosting. No wildcard CORS is enabled.
+
+`server/providers/base.py` defines the replaceable async provider interface.
+The Ollama adapter uses its documented [chat API](https://docs.ollama.com/api/chat),
+structured JSON, and disabled [thinking output](https://docs.ollama.com/capabilities/thinking).
+Only validated final dialogue is returned as `{text, mode, emotion}`; emotion is
+reserved for future delivery and never displayed. Full responses arrive once,
+then animate locally. No TTS, microphone, STT or gameplay commands are implemented.
+
+The backend reads [the canonical lorebook](docs/wingman/lorebook.md) directly from
+the repository on each request. It is not copied into JavaScript or the web
+bundle. Larry calls the current player **Kid**; current-operation labels use
+**PILOT 1** and **PIXY**. Cipher and Galm 2 remain historical identities.
+
+The dedicated `buildWingmanContext()` allowlist contains exactly:
+
+- `mode`: COMBAT, INTERMISSION or HANGAR. READY maps to HANGAR; ROUND_CLEAR
+  maps to INTERMISSION; GAME_OVER maps to COMBAT for a brief concerned reaction.
+  Pause retains its underlying phase's mode.
+- `wingman`: nullable `{aircraft, hp, maxHP, alive, state, special}`. Special is
+  NONE, READY, ACTIVE or COOLDOWN. Preflight may have no active aircraft yet.
+- `contacts`: at most 16 `{type, bearing, range, selected}` records. Only living,
+  non-hidden contacts within 8 km in 3D, without an explicit `detected: false`,
+  qualify; preflight/hangar sends none. Bearings round to 10°, ranges to 500 m.
+  This is stricter than the existing radar's distant edge markers.
+- `events`: at most eight allowed confirmed event names from the last 60 seconds.
+  No event carries player condition, kill counters or an enemy's hidden state.
+
+Player HP, ammo, score, future encounters, hidden contacts, input and mutable
+objects are omitted. The backend rejects unknown fields. Dialogue/history is
+separate untrusted content and cannot become system instructions or confirmed
+telemetry. The local browser supplies context; this is not server-authoritative
+multiplayer validation.
+
+History stays in this page's memory: up to 12 messages (six exchanges), further
+limited to 6,000 characters in both frontend and backend. Reloading or starting
+a replacement run clears it. Initial preflight discussion carries into round 1.
+Failed/cancelled requests and automatic reactions do not become dialogue history.
+Confirmed events provide limited tactical continuity instead.
+
+Player kills, player hits, wingman hits and game over can request short model
+reactions. Event IDs are deduplicated, ordinary reactions have a 12-second global
+cooldown, and failures impose 30 seconds of automatic-reaction backoff. Game over
+can preempt stale dialogue once; it respects offline backoff. Busy ordinary
+reactions are dropped, not queued. Combat start/end and detected hostile losses
+are recorded as context. AWACS stays on its own channel.
+
+Requests have a 25-second browser deadline and the configurable backend deadline
+(20 seconds by default). Cancel, phase changes and run transitions discard stale
+responses; send is disabled while pending. Longer backend timeouts also require
+adjusting the browser deadline in `wingman-client.js`. Provider/model failures,
+timeouts and malformed responses show exactly
+`COMMS INTERRUPTED. TEMPORARILY UNAVAILABLE.` and play a short procedural static
+effect when sound is enabled. There is no canned Larry fallback.
+
+Backend checks require no Ollama or model download:
+
+```sh
+python -m unittest discover -s server/tests -v
+```
+
+For an explicitly synthetic browser/API check only, use
+`python -m uvicorn server.tests.mock_app:app --host 127.0.0.1 --port 8000`
+instead of the normal backend. Its test dialogue is never selected automatically
+or used as a fallback. See [M6 validation](docs/m6-validation.md) for evidence and
+limits; real Qwen personality and prompt-resistance evaluation still need local
+inference on a machine running Ollama.
+
 ## How to play
 
-Select **Launch Sortie**, choose GALM 2's aircraft in Flight Operations, then launch round 1, a six-aircraft Silent Tide patrol. GALM 1 remains the procedural F-15C. Destroy every hostile to clear the round, then select the next engagement and **Continue Sortie**, or open **Hangar / Change GALM 2** first. Rounds have no final limit; losing GALM 1 ends the run.
+Select **Launch Sortie**, choose PIXY's aircraft in Flight Operations, then launch round 1, a six-aircraft Silent Tide patrol. PILOT 1 remains the procedural F-15C. Destroy every hostile to clear the round, then select the next engagement and **Continue Sortie**, or open **Hangar / Change PIXY** first. Rounds have no final limit; losing PILOT 1 ends the run.
 
-Health, missiles, flares, aircraft position, and flight state carry between rounds. There is no intermission repair or rearm; the cannon has unlimited ammunition. GALM 2's HP, destruction and weapon cooldowns also persist. Combat and its timers stop during intermission/hangar. Closing the encounter dialog leaves the run suspended; **Select Engagement** reopens it. Closing the hangar returns to the selected encounter. **Fly Again** after aircraft loss, or **Restart Run** from pause, opens aircraft selection for a fresh run.
+Health, missiles, flares, aircraft position, and flight state carry between rounds. There is no intermission repair or rearm; the cannon has unlimited ammunition. PIXY's HP, destruction and weapon cooldowns also persist. Combat and its timers stop during intermission/hangar. Closing the encounter dialog leaves the run suspended; **Select Engagement** reopens it. Closing the hangar returns to the selected encounter. **Fly Again** after aircraft loss, or **Restart Run** from pause, opens aircraft selection for a fresh run.
 
 Use **Tab** to select a living hostile, then **L** (or touch **LOCK**) to request missile lock. Keep it within the existing forward/range envelope for 0.65 seconds: **ACQ** becomes **LOCK**. Missiles require completed lock. Press L again to cancel; cycling or destroying the target clears the request. Leaving the envelope resets acquisition but retains your request for that same target. The cannon needs no lock. Deploy flares when a missile warning appears, and keep clear of terrain.
 
-GALM 2 follows a formation offset, independently engages enemies, breaks defensively when threatened, and regroups after losing a target. Its local deterministic AI uses shared missiles and cannon hits; wingman kills count toward round completion and score. Enemies alternate their existing timed missile threats between nearby friendly aircraft. Wingman loss does not end your run or trigger an automatic replacement next round.
+PIXY follows a formation offset, independently engages enemies, breaks defensively when threatened, and regroups after losing a target. Its local deterministic AI uses shared missiles and cannon hits; wingman kills count toward round completion and score. Enemies alternate their existing timed missile threats between nearby friendly aircraft. Wingman loss does not end your run or trigger an automatic replacement next round.
 
-| GALM 2 aircraft | HP | Missile / cannon damage | Special |
+| PIXY aircraft | HP | Missile / cannon damage | Special |
 | --- | --- | --- | --- |
 | The Ghost of Galm (default) | 1,500 | 30 / 3 per bullet | None |
 | Pixy's Prototype | 2,000 | 30 / 3 per bullet | Linear Laser: 50 damage/sec, 5 sec burst, 120 sec cooldown |
 
-The laser follows the aircraft's forward axis from its configured emitter and damages the nearest intersecting hostile. It stops on wingman loss or combat end. Cooldown starts at activation and advances only during combat. **Provisional hangar rule:** confirming a different wingman aircraft supplies a full-health replacement with fresh weapon timers. Keeping the same aircraft preserves its damage or destruction. Opening the hangar never repairs/rearms GALM 1.
+The laser follows the aircraft's forward axis from its configured emitter and damages the nearest intersecting hostile. It stops on wingman loss or combat end. Cooldown starts at activation and advances only during combat. **Provisional hangar rule:** confirming a different wingman aircraft supplies a full-health replacement with fresh weapon timers. Keeping the same aircraft preserves its damage or destruction. Opening the hangar never repairs/rearms PILOT 1.
 
 Available encounters:
 
@@ -50,7 +167,7 @@ Available encounters:
 
 Elite and Boss use the existing procedural aircraft and patrol behavior with different stats. They do not include advanced AI, boss phases, or special weapons.
 
-The HUD includes a pitch ladder, compass, airspeed, altitude, targeting cues, weapons, square radar, and aircraft status. The heading-relative radar retains its 8 km scale and north marker, clamps distant contacts to square edges, and distinguishes GALM 1's center symbol, cyan GALM 2 diamond/“2”, hostile dots and the amber selected hostile. Hold **V** to look behind from Chase or Cockpit; release restores the selected camera immediately. Sound starts muted; use the speaker button to enable the synthesized engine and combat effects.
+The HUD includes a pitch ladder, compass, airspeed, altitude, targeting cues, weapons, square radar, and aircraft status. The heading-relative radar retains its 8 km scale and north marker, clamps distant contacts to square edges, and distinguishes PILOT 1's center symbol, cyan PIXY diamond/“2”, hostile dots and the amber selected hostile. Hold **V** to look behind from Chase or Cockpit; release restores the selected camera immediately. Sound starts muted; use the speaker button to enable the synthesized engine and combat effects.
 
 | Input | Action |
 | --- | --- |
@@ -67,7 +184,9 @@ The HUD includes a pitch ladder, compass, airspeed, altitude, targeting cues, we
 | F | Deploy flares |
 | C | Switch chase / cockpit camera |
 | V (hold) | Rear view; release to restore selected camera |
-| Esc / P | Pause or resume |
+| Enter | Open chat; send while typing (Shift+Enter inserts a newline) |
+| Escape while chatting | Close chat and return flight input |
+| Esc / P | Pause or resume outside chat |
 | H | Show flight controls |
 
 Small screens and larger touchscreens show steering, fire, target and LOCK buttons. Weapon/camera buttons and the flight-controls dialog remain available. Leaving the browser tab pauses an active sortie.
@@ -100,7 +219,7 @@ Run `npm test` for the lightweight Node tests and `npm run build` for production
 
 Round progression is `READY → HANGAR → COMBAT → ROUND_CLEAR → INTERMISSION → COMBAT`, with optional `INTERMISSION → HANGAR → INTERMISSION → COMBAT` and `GAME_OVER` on player loss. Pause remains separate. RoundDirector checks living enemies independently of kill ownership. Add compositions and stats to the encounter catalog to define another encounter.
 
-M1–M5 are implemented within the current scope: one fixed player aircraft and two wingman choices. Final Elite/Boss mechanics, advanced dogfighting, physical landing, conversation/voice services and saves remain out of scope. `boss_air-destroyer.glb` remains untouched at the repository root for M9.
+M1–M5 are implemented within the current scope: one fixed player aircraft and two wingman choices. Final Elite/Boss mechanics, advanced dogfighting, physical landing, voice services and saves remain out of scope. M6 adds optional text conversation. `boss_air-destroyer.glb` remains untouched at the repository root for M9.
 
 ## Aircraft assets and combat units
 

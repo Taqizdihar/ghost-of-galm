@@ -14,7 +14,11 @@ import { createWingman } from './aircraft/wingman.js';
 import { hardpointWorld } from './aircraft/attachments.js';
 import { toWingmanDamage } from './combat/damage.js';
 import { createManualLock } from './combat/manual-lock.js';
+import { buildWingmanContext, conversationMode, isDetectedHostile } from './comms/context.js';
+import { createConversation } from './comms/conversation.js';
+import { createWingmanChat, isTextEntry } from './ui/wingman-chat.js';
 import './style.css';
+import './ui/wingman-chat.css';
 
 const icon = (name, size = 18) => {
   const paths = {
@@ -50,31 +54,32 @@ document.querySelector('#app').innerHTML = `
         <p class="intro-subtitle">Some aces never really disappear.</p>
         <div class="mission-location"><span class="tiny-cross">+</span><span>REYNIS COAST, BELKA<br><span class="muted">51° 24′ N &nbsp; 08° 32′ E</span></span></div>
       </div>
-      <div class="mission-panel">
+      <div class="operations-panel"><div id="chat-mount"></div><div class="mission-panel">
         <div class="panel-eyebrow"><span class="status-dot"></span><span id="mission-state">SORTIE READY</span><span class="panel-code" id="round-number">ROUND 01</span></div>
         <div class="mission-heading">OPERATION <span id="encounter-title">SILENT TIDE</span></div>
         <p id="objective">Clear hostile aircraft from the coastline.</p>
         <div class="mission-stats"><span>TARGETS <strong id="target-count"></strong></span><span>TIME <strong id="mission-time">00:00</strong></span><span>SCORE <strong id="score">000000</strong></span></div>
         <button id="launch-btn" class="launch-button"><span>LAUNCH SORTIE</span>${icon('chevron', 18)}</button>
-        <div id="flight-active" class="flight-active" hidden><span class="status-dot"></span> WEAPONS FREE <span>GOOD HUNTING, GALM 1.</span></div>
+        <div id="flight-active" class="flight-active" hidden><span class="status-dot"></span> WEAPONS FREE <span>GOOD HUNTING, PILOT 1.</span></div>
       </div>
-      <div class="sector-info"><span>AO <b>B7</b></span><div class="sector-rule"></div><span>VISIBILITY <b>24 KM</b></span><span>WIND <b>270° / 08 KT</b></span></div>
+      </div><div class="sector-info"><span>AO <b>B7</b></span><div class="sector-rule"></div><span>VISIBILITY <b>24 KM</b></span><span>WIND <b>270° / 08 KT</b></span></div>
       <div class="camera-switch" role="group" aria-label="Camera view"><button id="chase-btn" class="selected" aria-pressed="true">CHASE</button><button id="cockpit-btn" aria-pressed="false">COCKPIT</button><kbd>C</kbd></div>
       <div class="warning" id="warning" aria-live="polite"></div>
-      <section class="radar-panel" aria-label="Tactical radar"><div class="instrument-title">TAC / RADAR <span>8 KM</span></div><div class="radar-wrap"><canvas id="radar" width="176" height="176" aria-label="Friendly and hostile positions"></canvas></div><div class="radar-caption"><span class="status-dot"></span> GALM 1 <span>IFF / G2 CYAN</span></div></section>
+      <section class="radar-panel" aria-label="Tactical radar"><div class="instrument-title">TAC / RADAR <span>8 KM</span></div><div class="radar-wrap"><canvas id="radar" width="176" height="176" aria-label="Friendly and hostile positions"></canvas></div><div class="radar-caption"><span class="status-dot"></span> PILOT 1 <span>IFF / PIXY CYAN</span></div></section>
       <div class="comms" id="comms"><div class="comms-speaker">${icon('radio', 15)} <span>AWACS <b>EAGLE EYE</b></span><span class="comms-bars"><i></i><i></i><i></i><i></i><i></i></span></div><p id="radio-text">“The coast is clear. The sky is another story.”</p><span class="comms-frequency">CH 01 &nbsp; / &nbsp; 243.00 MHz</span></div>
-      <section class="weapons-panel" aria-label="Aircraft and weapons"><div class="instrument-title">F–15C EAGLE <span>GALM 1</span></div><div class="aircraft-status"><span class="aircraft-silhouette">${icon('plane', 56)}</span><div><div class="airframe-label">AIRFRAME <b id="health-value">100<span>%</span></b></div><div class="health-track"><span id="health-bar"></span></div><span class="airframe-state" id="airframe-state">ALL SYSTEMS NOMINAL</span></div></div><button class="weapon-row selected" id="missile-btn"><span class="weapon-symbol">↗</span><span>MSL <small>STANDARD MISSILE</small></span><strong id="missile-count">32</strong><kbd>1</kbd></button><button class="weapon-row" id="gun-btn"><span class="weapon-symbol gun-symbol">≡</span><span>GUN <small>20 MM CANNON</small></span><strong>∞</strong><kbd>2</kbd></button><div class="flares-row"><span>FLARES <b id="flare-count">06</b></span><button id="flare-btn" title="Deploy flares">DEPLOY <kbd>F</kbd></button></div></section>
-      <div id="wingman-status" class="wingman-status" role="status">GALM 2 / AWAITING SELECTION</div><div class="flight-data"><span><i class="status-dot"></i> FLIGHT ASSIST <b>ON</b></span><span id="g-force">1.0 G</span><span id="mach">M 0.72</span></div>
+      <section class="weapons-panel" aria-label="Aircraft and weapons"><div class="instrument-title">F–15C EAGLE <span>PILOT 1</span></div><div class="aircraft-status"><span class="aircraft-silhouette">${icon('plane', 56)}</span><div><div class="airframe-label">AIRFRAME <b id="health-value">100<span>%</span></b></div><div class="health-track"><span id="health-bar"></span></div><span class="airframe-state" id="airframe-state">ALL SYSTEMS NOMINAL</span></div></div><button class="weapon-row selected" id="missile-btn"><span class="weapon-symbol">↗</span><span>MSL <small>STANDARD MISSILE</small></span><strong id="missile-count">32</strong><kbd>1</kbd></button><button class="weapon-row" id="gun-btn"><span class="weapon-symbol gun-symbol">≡</span><span>GUN <small>20 MM CANNON</small></span><strong>∞</strong><kbd>2</kbd></button><div class="flares-row"><span>FLARES <b id="flare-count">06</b></span><button id="flare-btn" title="Deploy flares">DEPLOY <kbd>F</kbd></button></div></section>
+      <div id="wingman-status" class="wingman-status" role="status">PIXY / AWAITING SELECTION</div><div class="flight-data"><span><i class="status-dot"></i> FLIGHT ASSIST <b>ON</b></span><span id="g-force">1.0 G</span><span id="mach">M 0.72</span></div>
       <div class="touch-controls"><div class="touch-steering"><button data-key="ArrowUp" aria-label="Pitch up">↑</button><button data-key="ArrowLeft" aria-label="Turn left">←</button><button data-key="ArrowDown" aria-label="Pitch down">↓</button><button data-key="ArrowRight" aria-label="Turn right">→</button></div><button id="touch-fire">FIRE</button><button id="touch-target">TARGET</button><button id="touch-lock" aria-label="Request or cancel missile lock" aria-pressed="false">LOCK</button></div>
       <div class="loading-cover" id="loading-cover"><span class="brand-mark">${icon('plane', 42)}</span><span>PREPARING YOUR SORTIE</span><div class="loading-track"><i></i></div></div>
     </section>
     <footer class="control-bar"><div class="controls-list"><span><kbd>W</kbd><kbd>S</kbd> PITCH</span><span><kbd>A</kbd><kbd>D</kbd> ROLL</span><span><kbd>SHIFT</kbd> THROTTLE</span><span><kbd>SPACE</kbd> FIRE</span><span><kbd>TAB</kbd> TARGET</span><span><kbd>L</kbd> LOCK</span><span><kbd>V</kbd> REAR</span><span><kbd>C</kbd> CAMERA</span></div><button id="all-controls">ALL CONTROLS ${icon('chevron', 12)}</button><span class="footer-credit">AN UNOFFICIAL FAN EXPERIENCE</span></footer>
   </main>
-  <dialog id="game-dialog" aria-labelledby="dialog-title"><div class="dialog-top"><span class="eyebrow">GALM SQUADRON / FLIGHT OPERATIONS</span><button class="icon-button" id="dialog-close" aria-label="Close dialog">${icon('close')}</button></div><div id="dialog-content"></div></dialog>
+  <dialog id="game-dialog" aria-labelledby="dialog-title"><div class="dialog-top"><span class="eyebrow">COASTAL / FLIGHT OPERATIONS</span><button class="icon-button" id="dialog-close" aria-label="Close dialog">${icon('close')}</button></div><div id="dialog-content"></div></dialog>
 `;
 
 const $ = (id) => document.getElementById(id);
 const area = document.querySelector('.game');
+area.tabIndex = -1;
 const audio = new FlightAudio();
 let muted = true;
 let world;
@@ -118,6 +123,23 @@ function replaceEncounter(encounter) {
 }
 const director = createRoundDirector(run, replaceEncounter);
 replaceEncounter(getEncounter(DEFAULT_ENCOUNTER_ID));
+
+const chat = createWingmanChat({
+  onSend: message => conversation.send(message), onCancel: () => conversation.cancel(),
+  onFocus: () => keys.clear(),
+  onExit: () => { keys.clear(); ($('game-dialog').open ? $('dialog-close') : area).focus({ preventScroll: true }); },
+});
+const conversation = createConversation({
+  getContext: events => buildWingmanContext({ phase: run.phase, wingman, observer: player.position, enemies, selectedId, events }),
+  onChange: state => chat.render(state), onFailure: () => audio.play('radio-static'),
+});
+$('chat-mount').append(chat.panel);
+function syncConversationScope() {
+  conversation.setScope(`${conversationMode(run.phase)}:${run.round}:${run.phase === Phase.GAME_OVER}`);
+}
+function confirmedEvent(type, react = true) {
+  conversation.record(type, { react: react && !!wingman?.alive });
+}
 
 function resize() {
   width = area.clientWidth; height = area.clientHeight;
@@ -197,14 +219,14 @@ async function launchFromHangar(aircraftId) {
         onDestroyed: origin => {
           incomingWingman = 0;
           for (let i = 0; i < 18; i++) spawnParticle(origin.clone(), new THREE.Vector3((Math.random()-.5)*65, Math.random()*35, (Math.random()-.5)*65), 0xffa35b, 2, 2);
-          say('Galm 2 is down. Galm 1, your sortie continues.', 9); audio.play('destroy');
+          say('Pixy is down. Pilot 1, your sortie continues.', 9); audio.play('destroy');
         },
       });
     }
     selectedWingmanId = aircraftId;
     if (newRun) { director.startRun(); prepareRound(); }
     else continueSortie(pendingEncounterId);
-    if (wingman.assetStatus === 'fallback') say('GALM 2 model unavailable. Procedural substitute active.', 12);
+    if (wingman.assetStatus === 'fallback') say('PIXY model unavailable. Procedural substitute active.', 12);
     await audio.start(); audio.setMuted(muted);
   } finally { preparingAircraft = false; $('dialog-close').disabled = false; }
 }
@@ -219,8 +241,9 @@ function prepareRound() {
   $('flight-active').hidden = false;
   $('pause-btn').innerHTML = icon('pause');
   $('pause-btn').setAttribute('aria-label', 'Pause game');
-  say(`Galm 1, round ${run.round}. ${enemies.length} contacts. You are cleared to engage.`, 10);
+  say(`Pilot 1, round ${run.round}. ${enemies.length} contacts. You are cleared to engage.`, 10);
   updateUI();
+  conversation.clearEvents(); confirmedEvent('COMBAT_STARTED', false);
   area.focus({ preventScroll: true });
 }
 function continueSortie(encounterId) {
@@ -233,6 +256,8 @@ function clearCombatEffects() {
   projectiles = []; particles = [];
 }
 function resetGame() {
+  if (run.round > 0) conversation.reset();
+  else { conversation.cancel(); conversation.clearEvents(); }
   player.position.set(0, 460, 1400); Object.assign(player, { heading: 0, pitch: 0, roll: 0, speed: 880, throttle: .64, health: 100, missiles: 32, flares: 6 });
   selectedId = 0; manualLock.reset(); threatTime = 0; threatNumber = 0; incoming = 0; incomingWingman = 0; flareProtect = 0; fireCooldown = 0; gunCooldown = 0; currentWarning = '';
   removeWingman();
@@ -300,17 +325,21 @@ function damageEnemy(enemy, amount, source = 'player') {
   if (enemy.health <= 1e-8) destroyEnemy(enemy, source);
 }
 function destroyEnemy(enemy, source = 'player') {
+  const detected = isDetectedHostile(enemy, player.position);
   if (!director.recordDestruction(enemy, source)) return;
+  if (source === 'player') confirmedEvent('PLAYER_DESTROYED_TARGET');
+  else if (detected) confirmedEvent('DETECTED_HOSTILE_DESTROYED', false);
   scene.remove(enemy.mesh);
   audio.play('destroy');
   for (let i = 0; i < 25; i++) spawnParticle(enemy.mesh.position.clone(), new THREE.Vector3((Math.random()-.5)*90,(Math.random()-.3)*70,(Math.random()-.5)*90), i % 3 === 0 ? 0x38494d : 0xffa35b, 1.3+Math.random()*1.4, 1.5+Math.random()*3);
-  say(source === 'wingman' ? 'Galm 2, splash one. Hostile destroyed.' : enemies.filter(e => e.alive).length === 1 ? 'One bandit left. Finish the job, Galm 1.' : ['Confirmed hit. Target destroyed.', 'Splash one. Keep your eyes on the sky.', 'Good kill, Galm 1. On to the next.'][run.roundKills % 3], 7);
+  say(source === 'wingman' ? 'Pixy, splash one. Hostile destroyed.' : enemies.filter(e => e.alive).length === 1 ? 'One bandit left. Finish the job, Pilot 1.' : ['Confirmed hit. Target destroyed.', 'Splash one. Keep your eyes on the sky.', 'Good kill, Pilot 1. On to the next.'][run.roundKills % 3], 7);
   if (enemy.id === selectedId) selectBestTarget();
 }
 function finishMission() {
   if (!director.endRun()) return;
   keys.clear(); incoming = 0; incomingWingman = 0; currentWarning = ''; manualLock.reset(); wingman?.stopCombat();
   clearCombatEffects(); updateUI();
+  confirmedEvent('GAME_OVER');
   audio.play('warning');
   showDialog('lost');
 }
@@ -319,6 +348,7 @@ function clearRound() {
   clearCombatEffects();
   say(`Round ${run.round} cleared. Stand by for your next engagement.`, 10);
   audio.play('victory'); updateUI();
+  confirmedEvent('COMBAT_ENDED', false);
 }
 
 function updateFlight(dt) {
@@ -360,21 +390,21 @@ function updateFlight(dt) {
     const attackWingman = wingman?.alive && canThreaten(wingman.mesh.position) && (threatNumber % 2 === 1 || !canThreaten(player.position));
     if (attackWingman || canThreaten(player.position)) {
       threatTime = 0; threatNumber++;
-      if (attackWingman) { incomingWingman = 5; say('Galm 2, missile inbound. Defensive break.', 6); }
+      if (attackWingman) { incomingWingman = 5; say('Pixy, missile inbound. Defensive break.', 6); }
       else { incoming = 5; say('Missile inbound. Deploy flares!', 6); audio.play('warning'); }
     }
   }
   if (incoming > 0) {
     incoming -= dt;
-    if (incoming <= 0 && flareProtect <= 0) { player.health = Math.max(0, player.health - 24); audio.play('hit'); area.classList.add('damage-flash'); setTimeout(() => area.classList.remove('damage-flash'), 350); if (!player.health) finishMission(); }
+    if (incoming <= 0 && flareProtect <= 0) { player.health = Math.max(0, player.health - 24); audio.play('hit'); area.classList.add('damage-flash'); setTimeout(() => area.classList.remove('damage-flash'), 350); confirmedEvent('PLAYER_HIT'); if (!player.health) finishMission(); }
   }
   if (incomingWingman > 0) {
     incomingWingman -= dt;
-    if (incomingWingman <= 0 && wingman?.alive) wingman.damage(toWingmanDamage(24));
+    if (incomingWingman <= 0 && wingman?.alive && wingman.damage(toWingmanDamage(24))) confirmedEvent('WINGMAN_HIT');
   }
   const clearance = player.position.y - ground;
   currentWarning = incoming > 0 ? 'MISSILE ALERT · DEPLOY FLARES [F]' : clearance < 130 ? 'CAUTION · PULL UP' : '';
-  if (radioUntil < run.elapsed) { $('radio-text').textContent = '“Stay sharp, Galm 1. We have your six.”'; radioUntil = Infinity; }
+  if (radioUntil < run.elapsed) { $('radio-text').textContent = '“Stay sharp, Pilot 1. We have your six.”'; radioUntil = Infinity; }
 }
 
 function updateEffects(dt) {
@@ -426,6 +456,7 @@ function updateCamera(dt) {
   camera.updateMatrixWorld();
 }
 function updateUI() {
+  syncConversationScope();
   const encounter = run.currentEncounter || getEncounter(DEFAULT_ENCOUNTER_ID);
   $('target-count').innerHTML = `${String(run.roundKills).padStart(2,'0')} <i>/ ${String(enemyCount(encounter)).padStart(2,'0')}</i>`;
   $('round-number').textContent = `ROUND ${String(run.round || 1).padStart(2, '0')}`;
@@ -445,7 +476,7 @@ function updateUI() {
   $('mach').textContent = `M ${(player.speed / 1225).toFixed(2)}`;
   $('warning').textContent = mode() === 'playing' ? currentWarning : '';
   $('warning').classList.toggle('visible', mode() === 'playing' && !!currentWarning);
-  $('wingman-status').textContent = wingman ? `GALM 2 · ${wingman.alive ? `${Math.ceil(wingman.hp)}/${wingman.definition.maxHP} HP · ${wingman.aiState}` : 'DESTROYED'}${wingman.assetStatus === 'fallback' ? ' · SUBSTITUTE MODEL' : ''}` : 'GALM 2 · AWAITING SELECTION';
+  $('wingman-status').textContent = wingman ? `PIXY · ${wingman.alive ? `${Math.ceil(wingman.hp)}/${wingman.definition.maxHP} HP · ${wingman.aiState}` : 'DESTROYED'}${wingman.assetStatus === 'fallback' ? ' · SUBSTITUTE MODEL' : ''}` : 'PIXY · AWAITING SELECTION';
   const lock = manualLock.getSnapshot();
   $('touch-lock').textContent = lock.locked ? 'LOCKED' : lock.requested ? 'ACQ' : 'LOCK';
   $('touch-lock').setAttribute('aria-pressed', String(lock.requested));
@@ -495,7 +526,12 @@ function showDialog(type) {
   } else {
     $('dialog-content').innerHTML = `<div class="result-eyebrow">AIRCRAFT LOST / ROUND ${run.round}</div><h2 id="dialog-title">GHOSTS FLY <em>AGAIN.</em></h2><p class="dialog-description">The run is over. Regroup and take another run at the coast.</p><div class="result-stats"><div><span>SCORE</span><b>${String(run.score).padStart(6,'0')}</b></div><div><span>TOTAL KILLS</span><b>${run.totalKills}</b></div><div><span>FLIGHT TIME</span><b>${$('mission-time').textContent}</b></div></div><button class="launch-button" id="dialog-primary">FLY AGAIN ${icon('chevron')}</button>`;
   }
+  // Reuse one chat panel inside modal top-layer dialogs so it remains interactive.
+  // It stays outside dialog-content, which is replaced on each transition.
+  $('game-dialog').append(chat.panel);
+  chat.panel.classList.add('in-dialog');
   $('game-dialog').showModal();
+  syncConversationScope();
   if (!['intermission', 'hangar'].includes(type)) $('dialog-primary').onclick = () => { if (type === 'help') closeDialog(); else if (type === 'pause') resumeGame(); else startSortie(); };
   if ($('restart-btn')) $('restart-btn').onclick = () => { closeDialog(false); resetGame(); startSortie(); };
   keys.clear();
@@ -506,6 +542,7 @@ function closeDialog(resume = true) {
   const returnToIntermission = activeDialog === 'hangar' && run.hangarReturnPhase === Phase.INTERMISSION;
   if (run.phase === Phase.HANGAR) director.leaveHangar();
   $('game-dialog').close();
+  $('chat-mount').append(chat.panel); chat.panel.classList.remove('in-dialog');
   if (resume && (activeDialog === 'pause' || (activeDialog === 'help' && resumeAfterDialog))) {
     director.setPaused(false); $('pause-btn').innerHTML = icon('pause'); $('pause-btn').setAttribute('aria-label', 'Pause game');
   }
@@ -515,6 +552,7 @@ function closeDialog(resume = true) {
     $('flight-active').hidden = true;
   }
   activeDialog = ''; resumeAfterDialog = false; keys.clear();
+  syncConversationScope();
   if (resume && run.paused) showDialog('pause');
   else if (resume && returnToIntermission) showDialog('intermission');
 }
@@ -533,6 +571,10 @@ $('chase-btn').onclick = () => setView('chase'); $('cockpit-btn').onclick = () =
 $('missile-btn').onclick = () => setWeapon('MSL'); $('gun-btn').onclick = () => setWeapon('GUN'); $('flare-btn').onclick = deployFlares;
 window.addEventListener('keydown', (e) => {
   const key = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+  if (isTextEntry(e.target) || chat.contains(e.target)) return;
+  if (key === 'Enter' && !e.repeat && (e.target === document.body || e.target === area)) {
+    e.preventDefault(); chat.open(); return;
+  }
   if ($('game-dialog').open) { if (key === 'p' && activeDialog === 'pause') closeDialog(); return; }
   if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' ','Tab','Control','Shift'].includes(key) && mode() === 'playing') e.preventDefault();
   if (!e.repeat) {
@@ -562,6 +604,7 @@ $('touch-lock').onclick = toggleLock;
 // A read-only snapshot helps verify flight controls and mission state in the browser.
 window.__flight = Object.freeze({ getState: () => ({
   ...director.getSnapshot(), mode: mode(), view, weapon, kills: run.totalKills,
+  comms: { available: conversation.snapshot().available, pending: conversation.snapshot().pending, mode: conversationMode(run.phase) },
   locked: manualLock.getSnapshot().locked, manualLock: manualLock.getSnapshot(), rearView: rearView(),
   selectedWingmanAircraft: { id: selectedWingmanId, name: getWingmanAircraft(selectedWingmanId).name }, wingman: wingman?.getSnapshot() ?? null,
   target: selectedTarget()?.name, targetId: selectedTarget()?.id,
