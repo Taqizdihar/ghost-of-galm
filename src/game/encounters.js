@@ -3,8 +3,8 @@ const catalog = [
     id: 'silent_tide', category: 'STANDARD', title: 'SILENT TIDE',
     description: 'Clear a mixed patrol from the coastline.',
     enemies: [
-      { aircraft: 'MIG-29', count: 3, ai: 'patrol', health: 3, speed: 118, reward: 1200 },
-      { aircraft: 'SU-27', count: 3, ai: 'patrol', health: 3, speed: 125, reward: 1200 },
+      { aircraft: 'MIG-29', count: 10, ai: 'patrol', health: 3, speed: 118, reward: 1200 },
+      { aircraft: 'SU-27', count: 10, ai: 'patrol', health: 3, speed: 125, reward: 1200 },
     ],
   },
   {

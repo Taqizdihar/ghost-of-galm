@@ -1,8 +1,8 @@
 # Prerecorded Pixy gameplay radio
 
-M7-A provides the empty runtime library below. M7-B will add approved real
-Pixy MP3 recordings and populate `manifest.json`. The LLM chat and its
-procedural nonverbal mumble are separate from this gameplay radio.
+M7-B includes approved real Pixy command, reaction and ambient MP3s and a
+generated `manifest.json`. The LLM chat and its procedural nonverbal mumble
+are separate from this gameplay radio.
 
 ```text
 public/assets/audio/wingman/pixy/
@@ -15,12 +15,13 @@ public/assets/audio/wingman/pixy/
 └── bosses/_template/{intro,phase-01,defeat}/
 ```
 
-Each leaf directory contains only `.gitkeep` until an approved MP3 arrives.
+Generic command, reaction and ambient leaf directories contain approved
+runtime MP3s. Elite and Boss directories remain future-ready and unpopulated.
 `commands/` holds acknowledgements for accepted deterministic controls.
 `reactions/` holds confirmed gameplay event lines. `ambient/` holds optional
 mission chatter. `elite/` and `bosses/` isolate encounter-specific intro,
 combat, phase and defeat lines from ordinary ambient pools. The Air Destroyer
-tree is audio preparation only; no boss mechanics exist in M7-A.
+tree is audio preparation only; no boss mechanics exist in M7-B.
 
 ## Adding the friend's approved recordings for M7-B
 
@@ -29,12 +30,12 @@ tree is audio preparation only; no boss mechanics exist in M7-A.
    compression into them; Web Audio applies radio effects when played.
 2. Put each MP3 in its matching leaf folder. Use lower-case semantic names and
    three-digit sequence numbers. Do not name a file after its spoken sentence.
-3. Add one manifest entry under the matching pool key. Keep `id` equal to the
-   filename without `.mp3`, and `file` relative to the Pixy folder. Add the
-   exact subtitle/transcript and review the context fields. M7-A does not
-   invent any spoken lines or manifest entries.
-4. Run `npm test` and `npm run build`, then listen in a browser. M7-B will tune
-   gain, filters, ducking and line choice using the real recordings.
+3. Add the exact line, suggested filename and save-to path to
+   `Pixy Voiceline Script.md`. Run `npm run audio:manifest`; the Node builder
+   inventories actual generic MP3s and writes script-derived subtitles. It
+   reports unmatched files and excludes them from runtime selection.
+4. Run `npm run audio:check`, `npm test` and `npm run build`, then listen in a
+   browser and tune gain, filters, ducking and line choice as needed.
 
 Naming examples: `pixy_cmd_attack_001.mp3`, `pixy_cmd_regroup_001.mp3`,
 `pixy_evt_player_kill_001.mp3`, `pixy_evt_player_hit_001.mp3`,
@@ -51,21 +52,24 @@ Naming examples: `pixy_cmd_attack_001.mp3`, `pixy_cmd_regroup_001.mp3`,
 
 ## Manifest entry contract
 
-The empty `manifest.json` has version 1, speaker `pixy`, format `mp3`, and
-empty categorized pools. A future entry has stable `id`, relative `file`,
+The `manifest.json` has version 1, speaker `pixy`, format `mp3`, and
+categorized pools. Each entry has stable `id`, relative `file`,
 `subtitle`, positive `weight`, optional `priority`, `cooldownMs`,
 `contexts` (`STANDARD`, `ELITE`, `BOSS`), `excludeContexts`, optional
 `encounterId` and `phaseId`, and `preload` (`core`, `encounter`, `lazy`).
-Entry priority is bounded within its semantic event tier so a routine line
+Generic lines have `contexts: ["STANDARD"]` and exclude Elite/Boss. Entry
+priority is bounded within its semantic event tier so a routine line
 cannot outrank a boss phase or critical call.
 Malformed entries are discarded. Use encounter-specific keys such as
 `elite.<encounter-slug>.intro` or `boss.air-destroyer.phase-02` with matching
-`encounterId`; a phase line must also declare `phaseId`. Ordinary ambient
+`encounterId`; a phase line must also declare `phaseId`. Generic radio
 does not play in Elite or Boss contexts. The director only selects a line when
 its category, encounter and phase match. Existing encounter IDs containing
 underscores normalize to hyphens for radio context matching.
 
 `core` is for acknowledgements and critical common lines; `encounter` is for
-the current special encounter; `lazy` is for ambient/flavor. The runtime holds
-a small cache and loads MP3s on demand. A missing file or empty pool stays
-silent without interrupting flight.
+the current special encounter; `lazy` is for ambient/flavor. The runtime warms
+one line from each relevant core pool, keeps a bounded decoded AudioBuffer LRU
+cache, and loads other MP3s on demand. A missing file or empty pool stays
+silent without interrupting flight. A shared Pixy channel prevents recorded
+radio from overlapping the LLM request, word reveal or chat mumble.

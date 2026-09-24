@@ -3,21 +3,3013 @@
   "speaker": "pixy",
   "format": "mp3",
   "pools": {
-    "command.attack": [],
-    "command.regroup": [],
-    "command.attackTarget": [],
-    "command.defend": [],
-    "event.playerKill": [],
-    "event.playerHit": [],
-    "event.playerDanger": [],
-    "event.wingmanHit": [],
-    "event.wingmanKill": [],
-    "event.wingmanMissile": [],
-    "event.combatStart": [],
-    "event.combatEnd": [],
-    "event.gameOver": [],
-    "ambient.standard": [],
-    "ambient.pressure": [],
-    "ambient.calm": []
+    "command.attack": [
+      {
+        "id": "pixy_cmd_attack_001",
+        "file": "commands/attack/pixy_cmd_attack_001.mp3",
+        "subtitle": "Copy. I'm on them.",
+        "weight": 2,
+        "priority": 80,
+        "cooldownMs": 0,
+        "preload": "core",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_cmd_attack_002",
+        "file": "commands/attack/pixy_cmd_attack_002.mp3",
+        "subtitle": "Got it, Kid. Going in.",
+        "weight": 2,
+        "priority": 80,
+        "cooldownMs": 0,
+        "preload": "core",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_cmd_attack_003",
+        "file": "commands/attack/pixy_cmd_attack_003.mp3",
+        "subtitle": "Yeah. I'll take them.",
+        "weight": 2,
+        "priority": 80,
+        "cooldownMs": 0,
+        "preload": "core",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_cmd_attack_004",
+        "file": "commands/attack/pixy_cmd_attack_004.mp3",
+        "subtitle": "On it.",
+        "weight": 2,
+        "priority": 80,
+        "cooldownMs": 0,
+        "preload": "core",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_cmd_attack_005",
+        "file": "commands/attack/pixy_cmd_attack_005.mp3",
+        "subtitle": "Consider it handled.",
+        "weight": 2,
+        "priority": 80,
+        "cooldownMs": 0,
+        "preload": "core",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_cmd_attack_006",
+        "file": "commands/attack/pixy_cmd_attack_006.mp3",
+        "subtitle": "All right. Let's make them work for it.",
+        "weight": 1,
+        "priority": 80,
+        "cooldownMs": 0,
+        "preload": "core",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_cmd_attack_007",
+        "file": "commands/attack/pixy_cmd_attack_007.mp3",
+        "subtitle": "Got you, Kid. Breaking formation.",
+        "weight": 1,
+        "priority": 80,
+        "cooldownMs": 0,
+        "preload": "core",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_cmd_attack_008",
+        "file": "commands/attack/pixy_cmd_attack_008.mp3",
+        "subtitle": "I'll keep them busy.",
+        "weight": 2,
+        "priority": 80,
+        "cooldownMs": 0,
+        "preload": "core",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_cmd_attack_009",
+        "file": "commands/attack/pixy_cmd_attack_009.mp3",
+        "subtitle": "Fine by me. I was getting bored back here.",
+        "weight": 1,
+        "priority": 80,
+        "cooldownMs": 0,
+        "preload": "core",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_cmd_attack_010",
+        "file": "commands/attack/pixy_cmd_attack_010.mp3",
+        "subtitle": "You want pressure? I'll give them pressure.",
+        "weight": 1,
+        "priority": 80,
+        "cooldownMs": 0,
+        "preload": "core",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_cmd_attack_011",
+        "file": "commands/attack/pixy_cmd_attack_011.mp3",
+        "subtitle": "Moving in. Keep your head up.",
+        "weight": 2,
+        "priority": 80,
+        "cooldownMs": 0,
+        "preload": "core",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_cmd_attack_012",
+        "file": "commands/attack/pixy_cmd_attack_012.mp3",
+        "subtitle": "Heh. Thought you'd never ask.",
+        "weight": 2,
+        "priority": 80,
+        "cooldownMs": 0,
+        "preload": "core",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      }
+    ],
+    "command.regroup": [
+      {
+        "id": "pixy_cmd_regroup_001",
+        "file": "commands/regroup/pixy_cmd_regroup_001.mp3",
+        "subtitle": "Copy. Coming back.",
+        "weight": 2,
+        "priority": 80,
+        "cooldownMs": 0,
+        "preload": "core",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_cmd_regroup_002",
+        "file": "commands/regroup/pixy_cmd_regroup_002.mp3",
+        "subtitle": "Got you, Kid.",
+        "weight": 2,
+        "priority": 80,
+        "cooldownMs": 0,
+        "preload": "core",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_cmd_regroup_003",
+        "file": "commands/regroup/pixy_cmd_regroup_003.mp3",
+        "subtitle": "Regrouping on you.",
+        "weight": 2,
+        "priority": 80,
+        "cooldownMs": 0,
+        "preload": "core",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_cmd_regroup_004",
+        "file": "commands/regroup/pixy_cmd_regroup_004.mp3",
+        "subtitle": "Yeah, yeah. I'm coming.",
+        "weight": 2,
+        "priority": 80,
+        "cooldownMs": 0,
+        "preload": "core",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_cmd_regroup_005",
+        "file": "commands/regroup/pixy_cmd_regroup_005.mp3",
+        "subtitle": "All right. Back on your wing.",
+        "weight": 2,
+        "priority": 80,
+        "cooldownMs": 0,
+        "preload": "core",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_cmd_regroup_006",
+        "file": "commands/regroup/pixy_cmd_regroup_006.mp3",
+        "subtitle": "Got their tail, but whatever you say, Kid.",
+        "weight": 1,
+        "priority": 80,
+        "cooldownMs": 0,
+        "preload": "core",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_cmd_regroup_007",
+        "file": "commands/regroup/pixy_cmd_regroup_007.mp3",
+        "subtitle": "Breaking off. Forming up.",
+        "weight": 2,
+        "priority": 80,
+        "cooldownMs": 0,
+        "preload": "core",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_cmd_regroup_008",
+        "file": "commands/regroup/pixy_cmd_regroup_008.mp3",
+        "subtitle": "Fine. They can wait.",
+        "weight": 2,
+        "priority": 80,
+        "cooldownMs": 0,
+        "preload": "core",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_cmd_regroup_009",
+        "file": "commands/regroup/pixy_cmd_regroup_009.mp3",
+        "subtitle": "Coming back to you. Don't wander off.",
+        "weight": 1,
+        "priority": 80,
+        "cooldownMs": 0,
+        "preload": "core",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_cmd_regroup_010",
+        "file": "commands/regroup/pixy_cmd_regroup_010.mp3",
+        "subtitle": "Rejoining. Try not to make me regret it.",
+        "weight": 1,
+        "priority": 80,
+        "cooldownMs": 0,
+        "preload": "core",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_cmd_regroup_011",
+        "file": "commands/regroup/pixy_cmd_regroup_011.mp3",
+        "subtitle": "I'm with you.",
+        "weight": 2,
+        "priority": 80,
+        "cooldownMs": 0,
+        "preload": "core",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_cmd_regroup_012",
+        "file": "commands/regroup/pixy_cmd_regroup_012.mp3",
+        "subtitle": "Pulling back. Keep it steady.",
+        "weight": 2,
+        "priority": 80,
+        "cooldownMs": 0,
+        "preload": "core",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      }
+    ],
+    "command.attackTarget": [
+      {
+        "id": "pixy_cmd_attack_target_001",
+        "file": "commands/attack-target/pixy_cmd_attack_target_001.mp3",
+        "subtitle": "Target's mine.",
+        "weight": 2,
+        "priority": 80,
+        "cooldownMs": 0,
+        "preload": "core",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_cmd_attack_target_002",
+        "file": "commands/attack-target/pixy_cmd_attack_target_002.mp3",
+        "subtitle": "I see him. Moving in.",
+        "weight": 2,
+        "priority": 80,
+        "cooldownMs": 0,
+        "preload": "core",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_cmd_attack_target_003",
+        "file": "commands/attack-target/pixy_cmd_attack_target_003.mp3",
+        "subtitle": "Got your target, Kid.",
+        "weight": 2,
+        "priority": 80,
+        "cooldownMs": 0,
+        "preload": "core",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_cmd_attack_target_004",
+        "file": "commands/attack-target/pixy_cmd_attack_target_004.mp3",
+        "subtitle": "Yeah. I've got that one.",
+        "weight": 2,
+        "priority": 80,
+        "cooldownMs": 0,
+        "preload": "core",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_cmd_attack_target_005",
+        "file": "commands/attack-target/pixy_cmd_attack_target_005.mp3",
+        "subtitle": "Tracking. I'll take it from here.",
+        "weight": 1,
+        "priority": 80,
+        "cooldownMs": 0,
+        "preload": "core",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_cmd_attack_target_006",
+        "file": "commands/attack-target/pixy_cmd_attack_target_006.mp3",
+        "subtitle": "On your mark. Engaging.",
+        "weight": 2,
+        "priority": 80,
+        "cooldownMs": 0,
+        "preload": "core",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_cmd_attack_target_007",
+        "file": "commands/attack-target/pixy_cmd_attack_target_007.mp3",
+        "subtitle": "Locked on the same one.",
+        "weight": 2,
+        "priority": 80,
+        "cooldownMs": 0,
+        "preload": "core",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_cmd_attack_target_008",
+        "file": "commands/attack-target/pixy_cmd_attack_target_008.mp3",
+        "subtitle": "I see what you're looking at. Going after him.",
+        "weight": 1,
+        "priority": 80,
+        "cooldownMs": 0,
+        "preload": "core",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_cmd_attack_target_009",
+        "file": "commands/attack-target/pixy_cmd_attack_target_009.mp3",
+        "subtitle": "That one? Fine. He's mine.",
+        "weight": 2,
+        "priority": 80,
+        "cooldownMs": 0,
+        "preload": "core",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_cmd_attack_target_010",
+        "file": "commands/attack-target/pixy_cmd_attack_target_010.mp3",
+        "subtitle": "Copy. I'll put pressure on your target.",
+        "weight": 1,
+        "priority": 80,
+        "cooldownMs": 0,
+        "preload": "core",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      }
+    ],
+    "command.defend": [
+      {
+        "id": "pixy_cmd_defend_001",
+        "file": "commands/defend/pixy_cmd_defend_001.mp3",
+        "subtitle": "Copy. I'll cover you.",
+        "weight": 2,
+        "priority": 80,
+        "cooldownMs": 0,
+        "preload": "core",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_cmd_defend_002",
+        "file": "commands/defend/pixy_cmd_defend_002.mp3",
+        "subtitle": "I'm on your six.",
+        "weight": 2,
+        "priority": 80,
+        "cooldownMs": 0,
+        "preload": "core",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_cmd_defend_003",
+        "file": "commands/defend/pixy_cmd_defend_003.mp3",
+        "subtitle": "Got you covered, Kid.",
+        "weight": 2,
+        "priority": 80,
+        "cooldownMs": 0,
+        "preload": "core",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_cmd_defend_004",
+        "file": "commands/defend/pixy_cmd_defend_004.mp3",
+        "subtitle": "Stay sharp. I'll watch the rest.",
+        "weight": 1,
+        "priority": 80,
+        "cooldownMs": 0,
+        "preload": "core",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_cmd_defend_005",
+        "file": "commands/defend/pixy_cmd_defend_005.mp3",
+        "subtitle": "All right. I'll keep them off you.",
+        "weight": 1,
+        "priority": 80,
+        "cooldownMs": 0,
+        "preload": "core",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_cmd_defend_006",
+        "file": "commands/defend/pixy_cmd_defend_006.mp3",
+        "subtitle": "I'm with you. Keep flying.",
+        "weight": 2,
+        "priority": 80,
+        "cooldownMs": 0,
+        "preload": "core",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_cmd_defend_007",
+        "file": "commands/defend/pixy_cmd_defend_007.mp3",
+        "subtitle": "You do your thing. I'll handle the pressure.",
+        "weight": 1,
+        "priority": 80,
+        "cooldownMs": 0,
+        "preload": "core",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_cmd_defend_008",
+        "file": "commands/defend/pixy_cmd_defend_008.mp3",
+        "subtitle": "Covering. Don't make me chase you across the whole coast.",
+        "weight": 1,
+        "priority": 80,
+        "cooldownMs": 0,
+        "preload": "core",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_cmd_defend_009",
+        "file": "commands/defend/pixy_cmd_defend_009.mp3",
+        "subtitle": "Fine. I'll babysit your six for a minute.",
+        "weight": 1,
+        "priority": 80,
+        "cooldownMs": 0,
+        "preload": "core",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_cmd_defend_010",
+        "file": "commands/defend/pixy_cmd_defend_010.mp3",
+        "subtitle": "I've got your back. Move.",
+        "weight": 2,
+        "priority": 80,
+        "cooldownMs": 0,
+        "preload": "core",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      }
+    ],
+    "event.playerKill": [
+      {
+        "id": "pixy_evt_player_kill_001",
+        "file": "reactions/player-kill/pixy_evt_player_kill_001.mp3",
+        "subtitle": "Clean.",
+        "weight": 1,
+        "priority": 50,
+        "cooldownMs": 9000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_evt_player_kill_002",
+        "file": "reactions/player-kill/pixy_evt_player_kill_002.mp3",
+        "subtitle": "Nice shot, Kid.",
+        "weight": 1,
+        "priority": 50,
+        "cooldownMs": 9000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_evt_player_kill_003",
+        "file": "reactions/player-kill/pixy_evt_player_kill_003.mp3",
+        "subtitle": "Good kill.",
+        "weight": 1,
+        "priority": 50,
+        "cooldownMs": 9000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_evt_player_kill_004",
+        "file": "reactions/player-kill/pixy_evt_player_kill_004.mp3",
+        "subtitle": "That's one less.",
+        "weight": 1,
+        "priority": 50,
+        "cooldownMs": 9000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_evt_player_kill_005",
+        "file": "reactions/player-kill/pixy_evt_player_kill_005.mp3",
+        "subtitle": "Not bad.",
+        "weight": 1,
+        "priority": 50,
+        "cooldownMs": 9000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_evt_player_kill_006",
+        "file": "reactions/player-kill/pixy_evt_player_kill_006.mp3",
+        "subtitle": "Hell of a shot.",
+        "weight": 1,
+        "priority": 50,
+        "cooldownMs": 9000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_evt_player_kill_007",
+        "file": "reactions/player-kill/pixy_evt_player_kill_007.mp3",
+        "subtitle": "Saw that one.",
+        "weight": 1,
+        "priority": 50,
+        "cooldownMs": 9000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_evt_player_kill_008",
+        "file": "reactions/player-kill/pixy_evt_player_kill_008.mp3",
+        "subtitle": "You made that look easy.",
+        "weight": 1,
+        "priority": 50,
+        "cooldownMs": 9000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_evt_player_kill_009",
+        "file": "reactions/player-kill/pixy_evt_player_kill_009.mp3",
+        "subtitle": "Clean work.",
+        "weight": 1,
+        "priority": 50,
+        "cooldownMs": 9000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_evt_player_kill_010",
+        "file": "reactions/player-kill/pixy_evt_player_kill_010.mp3",
+        "subtitle": "Right through him. Nice.",
+        "weight": 1,
+        "priority": 50,
+        "cooldownMs": 9000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_evt_player_kill_011",
+        "file": "reactions/player-kill/pixy_evt_player_kill_011.mp3",
+        "subtitle": "Heh. They picked the wrong pilot.",
+        "weight": 1,
+        "priority": 50,
+        "cooldownMs": 9000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_evt_player_kill_012",
+        "file": "reactions/player-kill/pixy_evt_player_kill_012.mp3",
+        "subtitle": "You're making this unfair, Kid.",
+        "weight": 1,
+        "priority": 50,
+        "cooldownMs": 9000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_evt_player_kill_013",
+        "file": "reactions/player-kill/pixy_evt_player_kill_013.mp3",
+        "subtitle": "Keep that up and I'll start feeling unnecessary.",
+        "weight": 1,
+        "priority": 50,
+        "cooldownMs": 9000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_evt_player_kill_014",
+        "file": "reactions/player-kill/pixy_evt_player_kill_014.mp3",
+        "subtitle": "There you go.",
+        "weight": 1,
+        "priority": 50,
+        "cooldownMs": 9000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_evt_player_kill_015",
+        "file": "reactions/player-kill/pixy_evt_player_kill_015.mp3",
+        "subtitle": "One down. Stay focused.",
+        "weight": 1,
+        "priority": 50,
+        "cooldownMs": 9000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      }
+    ],
+    "event.playerHit": [
+      {
+        "id": "pixy_evt_player_hit_001",
+        "file": "reactions/player-hit/pixy_evt_player_hit_001.mp3",
+        "subtitle": "You're hit. Stay moving.",
+        "weight": 1,
+        "priority": 55,
+        "cooldownMs": 10000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_evt_player_hit_002",
+        "file": "reactions/player-hit/pixy_evt_player_hit_002.mp3",
+        "subtitle": "Kid, watch it.",
+        "weight": 1,
+        "priority": 55,
+        "cooldownMs": 10000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_evt_player_hit_003",
+        "file": "reactions/player-hit/pixy_evt_player_hit_003.mp3",
+        "subtitle": "Took a hit, huh? Keep flying.",
+        "weight": 1,
+        "priority": 55,
+        "cooldownMs": 10000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_evt_player_hit_004",
+        "file": "reactions/player-hit/pixy_evt_player_hit_004.mp3",
+        "subtitle": "Careful. Don't give them another one.",
+        "weight": 1,
+        "priority": 55,
+        "cooldownMs": 10000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_evt_player_hit_005",
+        "file": "reactions/player-hit/pixy_evt_player_hit_005.mp3",
+        "subtitle": "I saw that. You still good?",
+        "weight": 1,
+        "priority": 55,
+        "cooldownMs": 10000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_evt_player_hit_006",
+        "file": "reactions/player-hit/pixy_evt_player_hit_006.mp3",
+        "subtitle": "Shake it off, Kid.",
+        "weight": 1,
+        "priority": 55,
+        "cooldownMs": 10000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_evt_player_hit_007",
+        "file": "reactions/player-hit/pixy_evt_player_hit_007.mp3",
+        "subtitle": "That got through. Stay sharp.",
+        "weight": 1,
+        "priority": 55,
+        "cooldownMs": 10000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_evt_player_hit_008",
+        "file": "reactions/player-hit/pixy_evt_player_hit_008.mp3",
+        "subtitle": "Don't let them line up again.",
+        "weight": 1,
+        "priority": 55,
+        "cooldownMs": 10000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_evt_player_hit_009",
+        "file": "reactions/player-hit/pixy_evt_player_hit_009.mp3",
+        "subtitle": "Easy. You've still got the jet.",
+        "weight": 1,
+        "priority": 55,
+        "cooldownMs": 10000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_evt_player_hit_010",
+        "file": "reactions/player-hit/pixy_evt_player_hit_010.mp3",
+        "subtitle": "You're not done yet. Move.",
+        "weight": 1,
+        "priority": 55,
+        "cooldownMs": 10000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_evt_player_hit_011",
+        "file": "reactions/player-hit/pixy_evt_player_hit_011.mp3",
+        "subtitle": "They clipped you. Make them pay for it.",
+        "weight": 1,
+        "priority": 55,
+        "cooldownMs": 10000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_evt_player_hit_012",
+        "file": "reactions/player-hit/pixy_evt_player_hit_012.mp3",
+        "subtitle": "Kid, don't get stubborn on me now.",
+        "weight": 1,
+        "priority": 55,
+        "cooldownMs": 10000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      }
+    ],
+    "event.playerDanger": [
+      {
+        "id": "pixy_evt_player_danger_001",
+        "file": "reactions/player-danger/pixy_evt_player_danger_001.mp3",
+        "subtitle": "Break, Kid!",
+        "weight": 1,
+        "priority": 70,
+        "cooldownMs": 14000,
+        "preload": "core",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_evt_player_danger_002",
+        "file": "reactions/player-danger/pixy_evt_player_danger_002.mp3",
+        "subtitle": "Move!",
+        "weight": 1,
+        "priority": 70,
+        "cooldownMs": 14000,
+        "preload": "core",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_evt_player_danger_003",
+        "file": "reactions/player-danger/pixy_evt_player_danger_003.mp3",
+        "subtitle": "Missile! Break!",
+        "weight": 1,
+        "priority": 70,
+        "cooldownMs": 14000,
+        "preload": "core",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_evt_player_danger_004",
+        "file": "reactions/player-danger/pixy_evt_player_danger_004.mp3",
+        "subtitle": "Get out of there!",
+        "weight": 1,
+        "priority": 70,
+        "cooldownMs": 14000,
+        "preload": "core",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_evt_player_danger_005",
+        "file": "reactions/player-danger/pixy_evt_player_danger_005.mp3",
+        "subtitle": "Kid, you've got trouble!",
+        "weight": 1,
+        "priority": 70,
+        "cooldownMs": 14000,
+        "preload": "core",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_evt_player_danger_006",
+        "file": "reactions/player-danger/pixy_evt_player_danger_006.mp3",
+        "subtitle": "Hard break! Now!",
+        "weight": 1,
+        "priority": 70,
+        "cooldownMs": 14000,
+        "preload": "core",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_evt_player_danger_007",
+        "file": "reactions/player-danger/pixy_evt_player_danger_007.mp3",
+        "subtitle": "Don't hold that line!",
+        "weight": 1,
+        "priority": 70,
+        "cooldownMs": 14000,
+        "preload": "core",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_evt_player_danger_008",
+        "file": "reactions/player-danger/pixy_evt_player_danger_008.mp3",
+        "subtitle": "He's on you. Move!",
+        "weight": 1,
+        "priority": 70,
+        "cooldownMs": 14000,
+        "preload": "core",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_evt_player_danger_009",
+        "file": "reactions/player-danger/pixy_evt_player_danger_009.mp3",
+        "subtitle": "Get low, get fast, just move!",
+        "weight": 1,
+        "priority": 70,
+        "cooldownMs": 14000,
+        "preload": "core",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_evt_player_danger_010",
+        "file": "reactions/player-danger/pixy_evt_player_danger_010.mp3",
+        "subtitle": "Kid! Shake him!",
+        "weight": 1,
+        "priority": 70,
+        "cooldownMs": 14000,
+        "preload": "core",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_evt_player_danger_011",
+        "file": "reactions/player-danger/pixy_evt_player_danger_011.mp3",
+        "subtitle": "You've got one closing fast!",
+        "weight": 1,
+        "priority": 70,
+        "cooldownMs": 14000,
+        "preload": "core",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_evt_player_danger_012",
+        "file": "reactions/player-danger/pixy_evt_player_danger_012.mp3",
+        "subtitle": "Break right! I'll try to peel him off!",
+        "weight": 1,
+        "priority": 70,
+        "cooldownMs": 14000,
+        "preload": "core",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      }
+    ],
+    "event.wingmanHit": [
+      {
+        "id": "pixy_evt_wingman_hit_001",
+        "file": "reactions/wingman-hit/pixy_evt_wingman_hit_001.mp3",
+        "subtitle": "Damn. Took a hit.",
+        "weight": 1,
+        "priority": 60,
+        "cooldownMs": 10000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_evt_wingman_hit_002",
+        "file": "reactions/wingman-hit/pixy_evt_wingman_hit_002.mp3",
+        "subtitle": "I'm hit. Still flying.",
+        "weight": 1,
+        "priority": 60,
+        "cooldownMs": 10000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_evt_wingman_hit_003",
+        "file": "reactions/wingman-hit/pixy_evt_wingman_hit_003.mp3",
+        "subtitle": "Got clipped. I'm fine.",
+        "weight": 1,
+        "priority": 60,
+        "cooldownMs": 10000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_evt_wingman_hit_004",
+        "file": "reactions/wingman-hit/pixy_evt_wingman_hit_004.mp3",
+        "subtitle": "That one got through.",
+        "weight": 1,
+        "priority": 60,
+        "cooldownMs": 10000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_evt_wingman_hit_005",
+        "file": "reactions/wingman-hit/pixy_evt_wingman_hit_005.mp3",
+        "subtitle": "Heh. Felt that.",
+        "weight": 1,
+        "priority": 60,
+        "cooldownMs": 10000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_evt_wingman_hit_006",
+        "file": "reactions/wingman-hit/pixy_evt_wingman_hit_006.mp3",
+        "subtitle": "I'm good, Kid. Keep fighting.",
+        "weight": 1,
+        "priority": 60,
+        "cooldownMs": 10000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_evt_wingman_hit_007",
+        "file": "reactions/wingman-hit/pixy_evt_wingman_hit_007.mp3",
+        "subtitle": "Took a piece off me. Nothing important.",
+        "weight": 1,
+        "priority": 60,
+        "cooldownMs": 10000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_evt_wingman_hit_008",
+        "file": "reactions/wingman-hit/pixy_evt_wingman_hit_008.mp3",
+        "subtitle": "Still here.",
+        "weight": 1,
+        "priority": 60,
+        "cooldownMs": 10000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_evt_wingman_hit_009",
+        "file": "reactions/wingman-hit/pixy_evt_wingman_hit_009.mp3",
+        "subtitle": "They tagged me. I'll manage.",
+        "weight": 1,
+        "priority": 60,
+        "cooldownMs": 10000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_evt_wingman_hit_010",
+        "file": "reactions/wingman-hit/pixy_evt_wingman_hit_010.mp3",
+        "subtitle": "That bastard got lucky.",
+        "weight": 1,
+        "priority": 60,
+        "cooldownMs": 10000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_evt_wingman_hit_011",
+        "file": "reactions/wingman-hit/pixy_evt_wingman_hit_011.mp3",
+        "subtitle": "I'm still in it.",
+        "weight": 1,
+        "priority": 60,
+        "cooldownMs": 10000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_evt_wingman_hit_012",
+        "file": "reactions/wingman-hit/pixy_evt_wingman_hit_012.mp3",
+        "subtitle": "Don't worry about me. Watch your own six.",
+        "weight": 1,
+        "priority": 60,
+        "cooldownMs": 10000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      }
+    ],
+    "event.wingmanKill": [
+      {
+        "id": "pixy_evt_wingman_kill_001",
+        "file": "reactions/wingman-kill/pixy_evt_wingman_kill_001.mp3",
+        "subtitle": "Got one.",
+        "weight": 1,
+        "priority": 50,
+        "cooldownMs": 9000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_evt_wingman_kill_002",
+        "file": "reactions/wingman-kill/pixy_evt_wingman_kill_002.mp3",
+        "subtitle": "Splash one.",
+        "weight": 1,
+        "priority": 50,
+        "cooldownMs": 9000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_evt_wingman_kill_003",
+        "file": "reactions/wingman-kill/pixy_evt_wingman_kill_003.mp3",
+        "subtitle": "That's mine.",
+        "weight": 1,
+        "priority": 50,
+        "cooldownMs": 9000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_evt_wingman_kill_004",
+        "file": "reactions/wingman-kill/pixy_evt_wingman_kill_004.mp3",
+        "subtitle": "He's done.",
+        "weight": 1,
+        "priority": 50,
+        "cooldownMs": 9000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_evt_wingman_kill_005",
+        "file": "reactions/wingman-kill/pixy_evt_wingman_kill_005.mp3",
+        "subtitle": "One less problem.",
+        "weight": 1,
+        "priority": 50,
+        "cooldownMs": 9000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_evt_wingman_kill_006",
+        "file": "reactions/wingman-kill/pixy_evt_wingman_kill_006.mp3",
+        "subtitle": "Target down.",
+        "weight": 1,
+        "priority": 50,
+        "cooldownMs": 9000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_evt_wingman_kill_007",
+        "file": "reactions/wingman-kill/pixy_evt_wingman_kill_007.mp3",
+        "subtitle": "Heh. Still got it.",
+        "weight": 1,
+        "priority": 50,
+        "cooldownMs": 9000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_evt_wingman_kill_008",
+        "file": "reactions/wingman-kill/pixy_evt_wingman_kill_008.mp3",
+        "subtitle": "Your turn, Kid.",
+        "weight": 1,
+        "priority": 50,
+        "cooldownMs": 9000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_evt_wingman_kill_009",
+        "file": "reactions/wingman-kill/pixy_evt_wingman_kill_009.mp3",
+        "subtitle": "That one was getting annoying.",
+        "weight": 1,
+        "priority": 50,
+        "cooldownMs": 9000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_evt_wingman_kill_010",
+        "file": "reactions/wingman-kill/pixy_evt_wingman_kill_010.mp3",
+        "subtitle": "Took care of him.",
+        "weight": 1,
+        "priority": 50,
+        "cooldownMs": 9000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_evt_wingman_kill_011",
+        "file": "reactions/wingman-kill/pixy_evt_wingman_kill_011.mp3",
+        "subtitle": "Thought he had me. He didn't.",
+        "weight": 1,
+        "priority": 50,
+        "cooldownMs": 9000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_evt_wingman_kill_012",
+        "file": "reactions/wingman-kill/pixy_evt_wingman_kill_012.mp3",
+        "subtitle": "Don't look so surprised, Kid.",
+        "weight": 1,
+        "priority": 50,
+        "cooldownMs": 9000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      }
+    ],
+    "event.wingmanMissile": [
+      {
+        "id": "pixy_evt_wingman_fox2_001",
+        "file": "reactions/wingman-missile/pixy_evt_wingman_fox2_001.mp3",
+        "subtitle": "Fox two!",
+        "weight": 1,
+        "priority": 45,
+        "cooldownMs": 12000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_evt_wingman_fox2_002",
+        "file": "reactions/wingman-missile/pixy_evt_wingman_fox2_002.mp3",
+        "subtitle": "Fox two! Fox two!",
+        "weight": 1,
+        "priority": 45,
+        "cooldownMs": 12000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_evt_wingman_fox2_003",
+        "file": "reactions/wingman-missile/pixy_evt_wingman_fox2_003.mp3",
+        "subtitle": "Missile away!",
+        "weight": 1,
+        "priority": 45,
+        "cooldownMs": 12000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_evt_wingman_fox2_004",
+        "file": "reactions/wingman-missile/pixy_evt_wingman_fox2_004.mp3",
+        "subtitle": "Sending one.",
+        "weight": 1,
+        "priority": 45,
+        "cooldownMs": 12000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_evt_wingman_fox2_005",
+        "file": "reactions/wingman-missile/pixy_evt_wingman_fox2_005.mp3",
+        "subtitle": "He's got a missile coming.",
+        "weight": 1,
+        "priority": 45,
+        "cooldownMs": 12000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_evt_wingman_fox2_006",
+        "file": "reactions/wingman-missile/pixy_evt_wingman_fox2_006.mp3",
+        "subtitle": "Fox two, tracking.",
+        "weight": 1,
+        "priority": 45,
+        "cooldownMs": 12000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_evt_wingman_fox2_007",
+        "file": "reactions/wingman-missile/pixy_evt_wingman_fox2_007.mp3",
+        "subtitle": "Let him dodge this.",
+        "weight": 1,
+        "priority": 45,
+        "cooldownMs": 12000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_evt_wingman_fox2_008",
+        "file": "reactions/wingman-missile/pixy_evt_wingman_fox2_008.mp3",
+        "subtitle": "Missile out.",
+        "weight": 1,
+        "priority": 45,
+        "cooldownMs": 12000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_evt_wingman_fox2_009",
+        "file": "reactions/wingman-missile/pixy_evt_wingman_fox2_009.mp3",
+        "subtitle": "He's mine. Fox two.",
+        "weight": 1,
+        "priority": 45,
+        "cooldownMs": 12000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_evt_wingman_fox2_010",
+        "file": "reactions/wingman-missile/pixy_evt_wingman_fox2_010.mp3",
+        "subtitle": "Come on, take the bait.",
+        "weight": 1,
+        "priority": 45,
+        "cooldownMs": 12000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_evt_wingman_fox2_011",
+        "file": "reactions/wingman-missile/pixy_evt_wingman_fox2_011.mp3",
+        "subtitle": "One away. Watch him break.",
+        "weight": 1,
+        "priority": 45,
+        "cooldownMs": 12000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_evt_wingman_fox2_012",
+        "file": "reactions/wingman-missile/pixy_evt_wingman_fox2_012.mp3",
+        "subtitle": "Let's see how he handles this.",
+        "weight": 1,
+        "priority": 45,
+        "cooldownMs": 12000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      }
+    ],
+    "event.combatStart": [
+      {
+        "id": "pixy_evt_combat_start_001",
+        "file": "reactions/combat-start/pixy_evt_combat_start_001.mp3",
+        "subtitle": "All right, Kid. Here we go.",
+        "weight": 1,
+        "priority": 40,
+        "cooldownMs": 15000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_evt_combat_start_002",
+        "file": "reactions/combat-start/pixy_evt_combat_start_002.mp3",
+        "subtitle": "Contacts. Let's get to work.",
+        "weight": 1,
+        "priority": 40,
+        "cooldownMs": 15000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_evt_combat_start_003",
+        "file": "reactions/combat-start/pixy_evt_combat_start_003.mp3",
+        "subtitle": "Looks like they found us.",
+        "weight": 1,
+        "priority": 40,
+        "cooldownMs": 15000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_evt_combat_start_004",
+        "file": "reactions/combat-start/pixy_evt_combat_start_004.mp3",
+        "subtitle": "Back to it.",
+        "weight": 1,
+        "priority": 40,
+        "cooldownMs": 15000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_evt_combat_start_005",
+        "file": "reactions/combat-start/pixy_evt_combat_start_005.mp3",
+        "subtitle": "Stay sharp. We've got company.",
+        "weight": 1,
+        "priority": 40,
+        "cooldownMs": 15000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_evt_combat_start_006",
+        "file": "reactions/combat-start/pixy_evt_combat_start_006.mp3",
+        "subtitle": "Heh. Quiet never lasts long out here.",
+        "weight": 1,
+        "priority": 40,
+        "cooldownMs": 15000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_evt_combat_start_007",
+        "file": "reactions/combat-start/pixy_evt_combat_start_007.mp3",
+        "subtitle": "All right. Pick your fights.",
+        "weight": 1,
+        "priority": 40,
+        "cooldownMs": 15000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_evt_combat_start_008",
+        "file": "reactions/combat-start/pixy_evt_combat_start_008.mp3",
+        "subtitle": "Let's see what they brought this time.",
+        "weight": 1,
+        "priority": 40,
+        "cooldownMs": 15000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_evt_combat_start_009",
+        "file": "reactions/combat-start/pixy_evt_combat_start_009.mp3",
+        "subtitle": "They're coming in. You ready?",
+        "weight": 1,
+        "priority": 40,
+        "cooldownMs": 15000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_evt_combat_start_010",
+        "file": "reactions/combat-start/pixy_evt_combat_start_010.mp3",
+        "subtitle": "Keep your spacing. I'll take the other side.",
+        "weight": 1,
+        "priority": 40,
+        "cooldownMs": 15000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      }
+    ],
+    "event.combatEnd": [
+      {
+        "id": "pixy_evt_combat_end_001",
+        "file": "reactions/combat-end/pixy_evt_combat_end_001.mp3",
+        "subtitle": "That's the last of them.",
+        "weight": 1,
+        "priority": 40,
+        "cooldownMs": 15000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_evt_combat_end_002",
+        "file": "reactions/combat-end/pixy_evt_combat_end_002.mp3",
+        "subtitle": "Area's clear.",
+        "weight": 1,
+        "priority": 40,
+        "cooldownMs": 15000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_evt_combat_end_003",
+        "file": "reactions/combat-end/pixy_evt_combat_end_003.mp3",
+        "subtitle": "We're done here.",
+        "weight": 1,
+        "priority": 40,
+        "cooldownMs": 15000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_evt_combat_end_004",
+        "file": "reactions/combat-end/pixy_evt_combat_end_004.mp3",
+        "subtitle": "Looks quiet again.",
+        "weight": 1,
+        "priority": 40,
+        "cooldownMs": 15000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_evt_combat_end_005",
+        "file": "reactions/combat-end/pixy_evt_combat_end_005.mp3",
+        "subtitle": "That's it, Kid.",
+        "weight": 1,
+        "priority": 40,
+        "cooldownMs": 15000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_evt_combat_end_006",
+        "file": "reactions/combat-end/pixy_evt_combat_end_006.mp3",
+        "subtitle": "Heh. Still alive?",
+        "weight": 1,
+        "priority": 40,
+        "cooldownMs": 15000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_evt_combat_end_007",
+        "file": "reactions/combat-end/pixy_evt_combat_end_007.mp3",
+        "subtitle": "No more contacts. For now.",
+        "weight": 1,
+        "priority": 40,
+        "cooldownMs": 15000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_evt_combat_end_008",
+        "file": "reactions/combat-end/pixy_evt_combat_end_008.mp3",
+        "subtitle": "Not a bad day's work.",
+        "weight": 1,
+        "priority": 40,
+        "cooldownMs": 15000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_evt_combat_end_009",
+        "file": "reactions/combat-end/pixy_evt_combat_end_009.mp3",
+        "subtitle": "All right. Breathe.",
+        "weight": 1,
+        "priority": 40,
+        "cooldownMs": 15000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_evt_combat_end_010",
+        "file": "reactions/combat-end/pixy_evt_combat_end_010.mp3",
+        "subtitle": "We're clear. Let's not hang around.",
+        "weight": 1,
+        "priority": 40,
+        "cooldownMs": 15000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      }
+    ],
+    "event.gameOver": [
+      {
+        "id": "pixy_evt_game_over_001",
+        "file": "reactions/game-over/pixy_evt_game_over_001.mp3",
+        "subtitle": "Kid, do you copy?",
+        "weight": 1,
+        "priority": 100,
+        "cooldownMs": 0,
+        "preload": "core",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_evt_game_over_002",
+        "file": "reactions/game-over/pixy_evt_game_over_002.mp3",
+        "subtitle": "Kid!?",
+        "weight": 1,
+        "priority": 100,
+        "cooldownMs": 0,
+        "preload": "core",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_evt_game_over_003",
+        "file": "reactions/game-over/pixy_evt_game_over_003.mp3",
+        "subtitle": "Come on, Kid. Answer me.",
+        "weight": 1,
+        "priority": 100,
+        "cooldownMs": 0,
+        "preload": "core",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_evt_game_over_004",
+        "file": "reactions/game-over/pixy_evt_game_over_004.mp3",
+        "subtitle": "Kid, radio check. Now.",
+        "weight": 1,
+        "priority": 100,
+        "cooldownMs": 0,
+        "preload": "core",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_evt_game_over_005",
+        "file": "reactions/game-over/pixy_evt_game_over_005.mp3",
+        "subtitle": "Damn it. Kid?",
+        "weight": 1,
+        "priority": 100,
+        "cooldownMs": 0,
+        "preload": "core",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_evt_game_over_006",
+        "file": "reactions/game-over/pixy_evt_game_over_006.mp3",
+        "subtitle": "No... Kid, respond.",
+        "weight": 1,
+        "priority": 100,
+        "cooldownMs": 0,
+        "preload": "core",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_evt_game_over_007",
+        "file": "reactions/game-over/pixy_evt_game_over_007.mp3",
+        "subtitle": "Talk to me, Kid.",
+        "weight": 1,
+        "priority": 100,
+        "cooldownMs": 0,
+        "preload": "core",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_evt_game_over_008",
+        "file": "reactions/game-over/pixy_evt_game_over_008.mp3",
+        "subtitle": "Kid! Say something!",
+        "weight": 1,
+        "priority": 100,
+        "cooldownMs": 0,
+        "preload": "core",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      }
+    ],
+    "ambient.standard": [
+      {
+        "id": "pixy_amb_standard_001",
+        "file": "ambient/standard/pixy_amb_standard_001.mp3",
+        "subtitle": "Come on. Give me some fight.",
+        "weight": 1,
+        "priority": 30,
+        "cooldownMs": 45000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_amb_standard_002",
+        "file": "ambient/standard/pixy_amb_standard_002.mp3",
+        "subtitle": "Don't think you're getting away that easy.",
+        "weight": 1,
+        "priority": 30,
+        "cooldownMs": 45000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_amb_standard_003",
+        "file": "ambient/standard/pixy_amb_standard_003.mp3",
+        "subtitle": "They really keep sending these guys out here.",
+        "weight": 1,
+        "priority": 30,
+        "cooldownMs": 45000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_amb_standard_004",
+        "file": "ambient/standard/pixy_amb_standard_004.mp3",
+        "subtitle": "Kid, remind me who thought this coast was supposed to be quiet.",
+        "weight": 1,
+        "priority": 30,
+        "cooldownMs": 45000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_amb_standard_005",
+        "file": "ambient/standard/pixy_amb_standard_005.mp3",
+        "subtitle": "Heh. Another beautiful day at the end of the world.",
+        "weight": 1,
+        "priority": 30,
+        "cooldownMs": 45000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_amb_standard_006",
+        "file": "ambient/standard/pixy_amb_standard_006.mp3",
+        "subtitle": "They're flying like they already want to go home.",
+        "weight": 1,
+        "priority": 30,
+        "cooldownMs": 45000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_amb_standard_007",
+        "file": "ambient/standard/pixy_amb_standard_007.mp3",
+        "subtitle": "Don't chase too far. Let them come to us.",
+        "weight": 1,
+        "priority": 30,
+        "cooldownMs": 45000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_amb_standard_008",
+        "file": "ambient/standard/pixy_amb_standard_008.mp3",
+        "subtitle": "You take the loud one. I'll take the stupid one.",
+        "weight": 1,
+        "priority": 30,
+        "cooldownMs": 45000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_amb_standard_009",
+        "file": "ambient/standard/pixy_amb_standard_009.mp3",
+        "subtitle": "They've got numbers. We've got better habits.",
+        "weight": 1,
+        "priority": 30,
+        "cooldownMs": 45000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_amb_standard_010",
+        "file": "ambient/standard/pixy_amb_standard_010.mp3",
+        "subtitle": "I was promised a dangerous assignment. They're trying, I guess.",
+        "weight": 1,
+        "priority": 30,
+        "cooldownMs": 45000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_amb_standard_011",
+        "file": "ambient/standard/pixy_amb_standard_011.mp3",
+        "subtitle": "Keep them turning. I'll find the opening.",
+        "weight": 1,
+        "priority": 30,
+        "cooldownMs": 45000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_amb_standard_012",
+        "file": "ambient/standard/pixy_amb_standard_012.mp3",
+        "subtitle": "Not much of a welcome committee.",
+        "weight": 1,
+        "priority": 30,
+        "cooldownMs": 45000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_amb_standard_013",
+        "file": "ambient/standard/pixy_amb_standard_013.mp3",
+        "subtitle": "They're starting to get desperate.",
+        "weight": 1,
+        "priority": 30,
+        "cooldownMs": 45000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_amb_standard_014",
+        "file": "ambient/standard/pixy_amb_standard_014.mp3",
+        "subtitle": "You know, Kid, I almost miss boring patrols.",
+        "weight": 1,
+        "priority": 30,
+        "cooldownMs": 45000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_amb_standard_015",
+        "file": "ambient/standard/pixy_amb_standard_015.mp3",
+        "subtitle": "Let's make this quick. I've had enough coastline for one day.",
+        "weight": 1,
+        "priority": 30,
+        "cooldownMs": 45000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      }
+    ],
+    "ambient.pressure": [
+      {
+        "id": "pixy_amb_pressure_001",
+        "file": "ambient/pressure/pixy_amb_pressure_001.mp3",
+        "subtitle": "They're tightening the net.",
+        "weight": 1,
+        "priority": 30,
+        "cooldownMs": 45000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_amb_pressure_002",
+        "file": "ambient/pressure/pixy_amb_pressure_002.mp3",
+        "subtitle": "Keep moving. They're trying to box us in.",
+        "weight": 1,
+        "priority": 30,
+        "cooldownMs": 45000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_amb_pressure_003",
+        "file": "ambient/pressure/pixy_amb_pressure_003.mp3",
+        "subtitle": "Too many noses pointed our way.",
+        "weight": 1,
+        "priority": 30,
+        "cooldownMs": 45000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_amb_pressure_004",
+        "file": "ambient/pressure/pixy_amb_pressure_004.mp3",
+        "subtitle": "They're learning. That's inconvenient.",
+        "weight": 1,
+        "priority": 30,
+        "cooldownMs": 45000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_amb_pressure_005",
+        "file": "ambient/pressure/pixy_amb_pressure_005.mp3",
+        "subtitle": "Kid, don't give them a clean angle.",
+        "weight": 1,
+        "priority": 30,
+        "cooldownMs": 45000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_amb_pressure_006",
+        "file": "ambient/pressure/pixy_amb_pressure_006.mp3",
+        "subtitle": "We've got pressure on both sides.",
+        "weight": 1,
+        "priority": 30,
+        "cooldownMs": 45000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_amb_pressure_007",
+        "file": "ambient/pressure/pixy_amb_pressure_007.mp3",
+        "subtitle": "Stay loose. Don't let them set the pace.",
+        "weight": 1,
+        "priority": 30,
+        "cooldownMs": 45000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_amb_pressure_008",
+        "file": "ambient/pressure/pixy_amb_pressure_008.mp3",
+        "subtitle": "They're pushing hard now.",
+        "weight": 1,
+        "priority": 30,
+        "cooldownMs": 45000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_amb_pressure_009",
+        "file": "ambient/pressure/pixy_amb_pressure_009.mp3",
+        "subtitle": "All right. No more playing around.",
+        "weight": 1,
+        "priority": 30,
+        "cooldownMs": 45000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_amb_pressure_010",
+        "file": "ambient/pressure/pixy_amb_pressure_010.mp3",
+        "subtitle": "They're better than the last group.",
+        "weight": 1,
+        "priority": 30,
+        "cooldownMs": 45000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_amb_pressure_011",
+        "file": "ambient/pressure/pixy_amb_pressure_011.mp3",
+        "subtitle": "Keep your speed. This isn't the time to get greedy.",
+        "weight": 1,
+        "priority": 30,
+        "cooldownMs": 45000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_amb_pressure_012",
+        "file": "ambient/pressure/pixy_amb_pressure_012.mp3",
+        "subtitle": "We're still ahead of them. Keep it that way.",
+        "weight": 1,
+        "priority": 30,
+        "cooldownMs": 45000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      }
+    ],
+    "ambient.calm": [
+      {
+        "id": "pixy_amb_calm_001",
+        "file": "ambient/calm/pixy_amb_calm_001.mp3",
+        "subtitle": "Quiet for once.",
+        "weight": 1,
+        "priority": 30,
+        "cooldownMs": 45000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_amb_calm_002",
+        "file": "ambient/calm/pixy_amb_calm_002.mp3",
+        "subtitle": "Enjoy it, Kid. It never lasts.",
+        "weight": 1,
+        "priority": 30,
+        "cooldownMs": 45000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_amb_calm_003",
+        "file": "ambient/calm/pixy_amb_calm_003.mp3",
+        "subtitle": "Nice view. Shame about the people shooting at us.",
+        "weight": 1,
+        "priority": 30,
+        "cooldownMs": 45000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_amb_calm_004",
+        "file": "ambient/calm/pixy_amb_calm_004.mp3",
+        "subtitle": "You always fly this far out when you're bored?",
+        "weight": 1,
+        "priority": 30,
+        "cooldownMs": 45000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_amb_calm_005",
+        "file": "ambient/calm/pixy_amb_calm_005.mp3",
+        "subtitle": "Heh. Almost peaceful up here.",
+        "weight": 1,
+        "priority": 30,
+        "cooldownMs": 45000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_amb_calm_006",
+        "file": "ambient/calm/pixy_amb_calm_006.mp3",
+        "subtitle": "Hard to believe anyone fights over places this empty.",
+        "weight": 1,
+        "priority": 30,
+        "cooldownMs": 45000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_amb_calm_007",
+        "file": "ambient/calm/pixy_amb_calm_007.mp3",
+        "subtitle": "Don't get comfortable. That's when something stupid happens.",
+        "weight": 1,
+        "priority": 30,
+        "cooldownMs": 45000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_amb_calm_008",
+        "file": "ambient/calm/pixy_amb_calm_008.mp3",
+        "subtitle": "Wind's calm. Radio's quiet. I don't trust it.",
+        "weight": 1,
+        "priority": 30,
+        "cooldownMs": 45000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_amb_calm_009",
+        "file": "ambient/calm/pixy_amb_calm_009.mp3",
+        "subtitle": "Not much out here but water, mountains, and bad decisions.",
+        "weight": 1,
+        "priority": 30,
+        "cooldownMs": 45000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_amb_calm_010",
+        "file": "ambient/calm/pixy_amb_calm_010.mp3",
+        "subtitle": "You know, Kid, silence used to bother me more.",
+        "weight": 1,
+        "priority": 30,
+        "cooldownMs": 45000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_amb_calm_011",
+        "file": "ambient/calm/pixy_amb_calm_011.mp3",
+        "subtitle": "Take the quiet while you can.",
+        "weight": 1,
+        "priority": 30,
+        "cooldownMs": 45000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      },
+      {
+        "id": "pixy_amb_calm_012",
+        "file": "ambient/calm/pixy_amb_calm_012.mp3",
+        "subtitle": "If command calls this 'routine,' I'm charging extra.",
+        "weight": 1,
+        "priority": 30,
+        "cooldownMs": 45000,
+        "preload": "lazy",
+        "contexts": [
+          "STANDARD"
+        ],
+        "excludeContexts": [
+          "ELITE",
+          "BOSS"
+        ]
+      }
+    ]
   }
 }

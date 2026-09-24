@@ -26,7 +26,7 @@ test('hangar suspends progression and returns to its entry phase without repairi
   assert.equal(game.run.elapsed, before.elapsed); assert.equal(game.director.nextRound('border_patrol'), false);
   game.director.leaveHangar(); assert.equal(game.run.phase, Phase.INTERMISSION);
   game.director.nextRound('border_patrol'); assert.equal(game.run.round, 2);
-  assert.equal(game.run.killsBySource.wingman, 6);
+  assert.equal(game.run.killsBySource.wingman, 20);
 });
 
 test('100 consecutive rounds retain score and total ownership, with variable compositions', () => {
@@ -101,7 +101,7 @@ test('snapshots detach nested data; invalid and repeated transitions leave the r
   game.director.checkRoundComplete(); game.director.update(1);
   const snapshot = game.director.getSnapshot();
   snapshot.killsBySource.player = -1; snapshot.currentEncounter.title = 'MUTATED';
-  assert.equal(game.run.killsBySource.player, 6);
+  assert.equal(game.run.killsBySource.player, 20);
   assert.equal(game.run.currentEncounter.title, 'SILENT TIDE');
   assert.throws(() => game.director.nextRound('missing'), /Unknown encounter/);
   assert.equal(game.run.phase, Phase.INTERMISSION);

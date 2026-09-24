@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "test": "node --test",
+    "audio:manifest": "node scripts/build-pixy-manifest.mjs",
+    "audio:check": "node scripts/build-pixy-manifest.mjs --check",
     "dev": "vite --host 0.0.0.0",
     "build": "vite build",
     "preview": "vite preview --host 0.0.0.0"

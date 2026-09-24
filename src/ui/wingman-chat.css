@@ -1,13 +1,12 @@
 /* This sheet is imported after the base HUD styles by main.js. */
-.operations-panel {
-  position: absolute; top: 24px; left: 38px; width: 280px; z-index: 3;
-  display: flex; flex-direction: column; gap: 10px;
-  max-height: calc(100% - 285px); overflow-y: auto; scrollbar-width: thin;
-  scrollbar-color: #658579 #152c31;
-}
-.game .operations-panel .mission-panel {
-  position: static; width: 100%; flex-shrink: 0; transition: none; margin: 0;
-}
+.operations-panel { position: absolute; top: 24px; left: 38px; width: 280px; z-index: 3; max-height: calc(100% - 285px); overflow-y: auto; scrollbar-width: thin; scrollbar-color: #658579 #152c31; }
+.right-stack { position: absolute; top: 24px; right: 38px; width: 280px; z-index: 3; display: flex; flex-direction: column; gap: 12px; }
+.game .right-stack .mission-panel { position: static; width: 100%; flex-shrink: 0; transition: none; margin: 0; }
+.game .right-stack .sector-info { position: static; display: flex; align-items: flex-end; gap: 7px; padding: 0 5px; }
+.game { --radar-size: 224px; --radar-left: 38px; }
+.game .radar-panel { left: var(--radar-left); width: var(--radar-size); }
+.game .radar-wrap { width: calc(var(--radar-size) + 2px); height: calc(var(--radar-size) + 2px); }
+.game #radar { width: var(--radar-size); height: var(--radar-size); display: block; }
 .game .mission-intro { left: 355px; top: 45px; pointer-events: none; }
 .wingman-chat { padding: 12px; border: 1px solid #83e5ff55; background: #122930ed; color: #dae9df; }
 .chat-header { display: flex; align-items: center; gap: 10px; }
@@ -31,12 +30,16 @@
 .chat-actions button, .chat-reveal { padding: 7px; color: var(--mint); background: #25453e; font: 8px var(--mono); }
 .chat-reveal { margin-top: 0; }
 .chat-voice-controls { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; margin-top: 10px; }
-.wingman-command { position: absolute; left: 50%; bottom: 165px; transform: translateX(-50%); z-index: 3; display: flex; gap: 5px; align-items: center; padding: 4px 6px; border: 1px solid #83e5ff55; background: #122930dc; color: #83e5ff; font: 7px var(--mono); white-space: nowrap; }
+.wingman-command { position: absolute; left: calc(var(--radar-left) + var(--radar-size) + 14px); bottom: 31px; z-index: 3; display: grid; grid-template-columns: repeat(2, auto); gap: 5px; align-items: center; padding: 6px; border: 1px solid #83e5ff55; background: #122930dc; color: #83e5ff; font: 7px var(--mono); white-space: nowrap; }
+.wingman-command > span { grid-column: 1 / -1; }
 .wingman-command button { color: #b9d9d0; background: #25453e; padding: 5px 7px; font: 8px var(--mono); touch-action: manipulation; }
 .wingman-command button[aria-pressed="true"] { color: #122930; background: #83e5ff; }
 .wingman-command button:disabled { opacity: .45; }
 .wingman-command kbd { font-size: 7px; }
-.pixy-radio { position: absolute; left: 50%; bottom: 188px; transform: translateX(-50%); z-index: 3; color: #83e5ff; background: #122930e8; padding: 6px 9px; font: 9px var(--mono); text-align: center; max-width: 55%; }
+.pixy-radio { position: absolute; left: 50%; top: 24px; transform: translateX(-50%); z-index: 4; color: #83e5ff; background: #122930d9; padding: 7px 12px; border-top: 1px solid #83e5ff77; font: 11px/1.45 var(--mono); text-align: center; width: min(430px, calc(100% - 650px)); min-width: 180px; display: flex; flex-direction: column; gap: 3px; pointer-events: none; }
+.pixy-radio[hidden] { display: none; }
+.pixy-radio > span:first-child { font-size: 9px; letter-spacing: 2px; }
+.pixy-radio-text { color: #a9efff; white-space: normal; }
 .chat-voice-controls label, .chat-voice-status { font: 8px/1.5 var(--mono); color: #a3b9ad; }
 .chat-voice-controls input[type="range"] { width: 75px; accent-color: #83e5ff; }
 .chat-voice-controls input[type="checkbox"] { accent-color: #83e5ff; vertical-align: middle; }
@@ -47,17 +50,34 @@
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 @media (max-width: 1150px) {
   .operations-panel { left: 25px; width: 250px; }
+  .right-stack { right: 25px; width: 250px; }
+  .game { --radar-left: 25px; }
   .game .mission-intro { left: 305px; }
 }
 @media (max-width: 900px) {
   .operations-panel { top: 16px; left: 20px; width: 230px; max-height: calc(100% - 245px); }
+  .right-stack { top: 16px; right: 20px; width: 230px; }
+  .game { --radar-size: 160px; --radar-left: 20px; }
+  .wingman-command { grid-template-columns: 1fr; bottom: 132px; }
+  .wingman-command > span { grid-column: 1; }
+  .pixy-radio { width: min(340px, calc(100% - 510px)); }
   .game .mission-intro { left: 280px; top: 95px; }
 }
 @media (max-width: 650px) {
-  .wingman-command { bottom: 250px; left: auto; right: 12px; transform: none; }
-  .wingman-command > span, .wingman-command kbd { display: none; }
-  .pixy-radio { bottom: 294px; max-width: 70%; }
-  .operations-panel { top: 10px; left: 12px; width: 215px; max-height: calc(100% - 355px); }
+  .game { --radar-size: 108px; --radar-left: 20px; }
+  .wingman-command { left: calc(var(--radar-left) + var(--radar-size) + 7px); bottom: 108px; padding: 4px; }
+  .wingman-command > span { font-size: 6px; }
+  .wingman-command kbd { display: none; }
+  .wingman-command button { padding: 5px; font-size: 7px; }
+  .pixy-radio { top: 225px; width: min(90%, 360px); font-size: 9px; padding: 5px 8px; }
+  .operations-panel { top: 10px; left: 12px; width: 45vw; max-height: 190px; }
+  .right-stack { top: 10px; right: 12px; width: 43vw; gap: 5px; }
+  .right-stack .mission-panel { padding: 9px; }
+  .game .right-stack .sector-info { display: flex; font-size: 5px; gap: 4px; }
+  .game .right-stack .sector-info > span:first-child { font-size: 6px; }
+  .game .right-stack .sector-info > span:first-child b { font-size: 12px; }
+  .game .right-stack .sector-rule { width: 100%; }
+  .game.is-playing .right-stack .sector-info { display: flex; }
   .game .mission-intro { display: none; }
   .wingman-chat { padding: 9px; }
   .chat-header { gap: 7px; }
@@ -65,11 +85,18 @@
   .chat-avatar { width: 29px; height: 34px; font-size: 13px; }
   .chat-form textarea { font-size: 16px; }
   .chat-actions span { font-size: 5px; }
-  .game .operations-panel .mission-panel { padding: 10px; }
-  .game .operations-panel .mission-panel p { margin-bottom: 8px; }
-  .game .operations-panel .flight-active { flex-wrap: wrap; padding-top: 8px; }
-  .game .operations-panel .flight-active > span:last-child { margin-left: 0; }
+  .game .right-stack .mission-panel p { margin-bottom: 8px; }
+  .game .right-stack .flight-active { flex-wrap: wrap; padding-top: 8px; }
+  .game .right-stack .flight-active > span:last-child { margin-left: 0; }
+  .chat-header span { display: none; }
+  .chat-avatar { display: none; }
 }
 @media (min-width: 651px) and (max-height: 660px) {
   .operations-panel { max-height: calc(100% - 215px); }
+  .game { --radar-size: 150px; }
 }
+@media (min-width: 901px) and (max-height: 790px) { .game { --radar-size: 176px; } }
+@media (min-width: 901px) and (max-height: 790px) { .wingman-command { bottom: 126px; } }
+@media (max-width: 650px) and (max-height: 720px) { .game { --radar-size: 90px; } .wingman-command { bottom: 100px; } }
+@media (max-width: 390px) { .right-stack .mission-stats { gap: 2px; } .right-stack .mission-stats strong { font-size: 12px; } .chat-header strong { font-size: 10px; } }
+@media (max-width: 360px) { .game .weapons-panel { width: 130px; right: 12px; } .pixy-radio { top: 255px; } }

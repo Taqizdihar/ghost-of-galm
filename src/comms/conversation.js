@@ -14,26 +14,32 @@ export function createConversation({ getContext, onChange = () => {}, onFailure 
   onCancel = () => {},
   request = requestWingman, now = () => performance.now() }) {
   let history = [], recentEvents = [], seen = new Set(), serial = 0, eventSerial = 0;
-  let pending = null, scope = '', available = null;
+  let pending = null, staged = null, scope = '', available = null;
   let lastPlayer = '', text = '', error = '', mode = 'HANGAR', emotion = 'calm';
-  const snapshot = () => ({ pending: !!pending, available, player: lastPlayer, text, error, mode, emotion });
+  const snapshot = () => ({ pending: !!pending || !!staged, waiting: !!staged, available, player: lastPlayer, text, error, mode, emotion });
   const emit = () => onChange(snapshot());
   const eventTypes = () => recentEvents.filter(e => now() - e.time < 60000).map(e => e.type);
 
   function cancel() {
     serial++;
-    pending?.controller.abort(); pending = null;
+    pending?.controller.abort(); pending = null; staged = null;
     onCancel();
     emit();
   }
-  async function send(message) {
-    if (pending || !message?.trim()) return false;
+  function stage(message) {
+    if (pending || staged || !message?.trim()) return false;
     cancel();
+    staged = message.trim().slice(0, 1000);
+    lastPlayer = staged;
+    text = ''; error = ''; emit();
+    return true;
+  }
+  async function dispatchStaged() {
+    if (!staged || pending) return false;
+    const message = staged; staged = null;
     const controller = new AbortController(), id = ++serial;
     pending = { controller };
-    lastPlayer = message.trim().slice(0, 1000);
-    text = '';
-    error = ''; emit();
+    lastPlayer = message; emit();
     try {
       const context = getContext(eventTypes());
       const reply = await request({ context, message: lastPlayer,
@@ -55,8 +61,9 @@ export function createConversation({ getContext, onChange = () => {}, onFailure 
       if (id === serial) { pending = null; emit(); }
     }
   }
+  async function send(message) { return stage(message) ? dispatchStaged() : false; }
   return {
-    send, cancel,
+    send, stage, dispatchStaged, cancel,
     snapshot,
     setScope(next) {
       if (scope !== next) { scope = next; cancel(); text = ''; error = available === false ? UNAVAILABLE : ''; emit(); }

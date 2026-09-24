@@ -5,7 +5,7 @@ export function isTextEntry(target) {
 }
 
 export function createWingmanChat({ onSend, onFocus, onCancel, onExit,
-  onWordShown = () => {}, onTypingStart = () => {}, onTypingCancel = () => {}, onMumbleToggle = () => {} }) {
+  onWordShown = () => {}, onTypingStart = () => {}, onTypingCancel = () => {}, onTypingEnd = () => {}, onMumbleToggle = () => {} }) {
   const panel = document.createElement('section');
   panel.className = 'wingman-chat'; panel.setAttribute('aria-label', 'Pixy conversation');
   panel.innerHTML = `
@@ -28,16 +28,17 @@ export function createWingmanChat({ onSend, onFocus, onCancel, onExit,
   const $ = selector => panel.querySelector(selector);
   const input = $('#chat-input'), body = $('#chat-body'), toggle = $('.chat-toggle');
   const response = $('.chat-response'), preview = $('.chat-preview'), reveal = $('.chat-reveal');
-  let timer = 0, progress = null, fullText = '', lastText = '', pending = false;
+  let timer = 0, progress = null, fullText = '', lastText = '', pending = false, revealing = false;
   function finishTyping(cancelAudio = true) {
     cancelAnimationFrame(timer); timer = 0;
     progress?.cancel(); progress = null;
     if (cancelAudio) onTypingCancel();
     response.textContent = fullText; preview.textContent = fullText;
     reveal.hidden = true; $('.chat-announcement').textContent = fullText;
+    if (revealing) { revealing = false; onTypingEnd(); }
   }
   function type(text, mode = 'HANGAR', emotion = 'calm') {
-    cancelAnimationFrame(timer); progress?.cancel(); onTypingCancel(); fullText = text;
+    cancelAnimationFrame(timer); progress?.cancel(); onTypingCancel(); fullText = text; revealing = !!text;
     response.textContent = ''; preview.textContent = ''; $('.chat-announcement').textContent = '';
     reveal.hidden = !text;
     // Reduced motion reveals all text at once and makes no word sounds.
@@ -76,7 +77,8 @@ export function createWingmanChat({ onSend, onFocus, onCancel, onExit,
   $('.chat-form').onsubmit = e => {
     e.preventDefault();
     if (pending || !input.value.trim()) return;
-    const message = input.value.trim(); input.value = ''; void onSend(message);
+    const message = input.value.trim();
+    if (onSend(message) !== false) input.value = '';
   };
   $('.chat-cancel').onclick = onCancel;
   $('.chat-mumble-toggle').onchange = e => onMumbleToggle(e.target.checked);
@@ -88,7 +90,7 @@ export function createWingmanChat({ onSend, onFocus, onCancel, onExit,
       pending = state.pending;
       $('.chat-form button[type="submit"]').disabled = pending;
       $('.chat-cancel').hidden = !pending;
-      $('.chat-status').textContent = state.error || (pending ? 'COMMS / TRANSMITTING…' : state.available ? 'COMMS / CONNECTED' : 'COMMS / STANDBY');
+      $('.chat-status').textContent = state.error || (state.waiting ? 'WAITING FOR RADIO CHANNEL' : pending ? 'COMMS / TRANSMITTING…' : state.available ? 'COMMS / CONNECTED' : 'COMMS / STANDBY');
       $('.chat-status').classList.toggle('interrupted', !!state.error);
       $('.chat-player').hidden = !state.player;
       $('.chat-player').textContent = `YOU / ${state.player}`;

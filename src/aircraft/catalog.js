@@ -5,7 +5,7 @@ function freeze(value) {
 
 // All attachments use the normalized wrapper: +X right, +Y up, -Z forward.
 export const playerAircraft = freeze({
-  id: 'f15c', name: 'F-15C Eagle', type: 'procedural', collisionRadius: 12, maxHP: 100,
+  id: 'f15c', name: 'F-15C Eagle', type: 'procedural', collisionRadius: 12, maxHP: 100, missileCapacity: 120,
   hardpoints: { missileLeft: [-3.45, -.8, 1], missileRight: [3.45, -.8, 1], cannon: [1, 0, -10], exhaust: [0, -.28, 10], impact: [0, 0, 0] },
 });
 const standardWeapons = {

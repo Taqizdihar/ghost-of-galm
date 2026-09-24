@@ -21,7 +21,9 @@ export function spawnEncounter(scene, encounter, player, terrainHeight) {
   return expandEncounter(encounter).map((member, index) => {
     const mesh = createAircraft(THREE, { enemy: true });
     const side = lateral[index % lateral.length];
-    const ahead = 2350 + index * 950;
+    // Stagger twenty contacts across several lanes without pushing later aircraft
+    // against the world bounds and stacking them at the same clamped coordinate.
+    const ahead = 2350 + Math.floor(index / 4) * 1450 + (index % 4) * 260;
     // Place each new engagement ahead of the aircraft without teleporting the player.
     const x = THREE.MathUtils.clamp(player.position.x + Math.cos(player.heading) * side + Math.sin(player.heading) * ahead, -17000, 17000);
     const z = THREE.MathUtils.clamp(player.position.z + Math.sin(player.heading) * side - Math.cos(player.heading) * ahead, -34000, 11000);

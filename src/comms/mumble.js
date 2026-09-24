@@ -63,6 +63,7 @@ export function createChatMumble(audio) {
       if (token.isLastWord) active = false;
     },
     cancel,
+    whenIdle() { return Promise.all([...grains].map(grain => grain.ended)); },
     setEnabled(value) { enabled = !!value; if (!enabled) cancel(); },
     snapshot() { return { enabled, active: active || grains.size > 0 }; },
   };

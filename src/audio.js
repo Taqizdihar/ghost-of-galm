@@ -113,6 +113,10 @@ export class FlightAudio {
   }
 
   playRadio(buffer, options) { return playRadioClip(this, buffer, options); }
+  decodeRadio(bytes) {
+    if (!this.context || this.context.state !== 'running') throw new Error('Audio unavailable');
+    return this.context.decodeAudioData(bytes.slice(0));
+  }
 
   playMumbleGrain({ duration, frequency, gain: level, lowPass, noise }) {
     const context = this.context;

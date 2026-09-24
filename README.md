@@ -143,7 +143,7 @@ or used as a fallback. See [M6 validation](docs/m6-validation.md) for evidence a
 limits; real Qwen personality and prompt-resistance evaluation still need local
 inference on a machine running Ollama.
 
-## Wingman audio architecture (M7-A)
+## Wingman chat and prerecorded radio (M7-A/M7-B)
 
 LLM chat remains text. Larry's reply reveals one word at a time; the same
 typing timeline calls a small browser-generated Web Audio mumble grain for each
@@ -164,24 +164,37 @@ wingman. A new run or replacement aircraft starts in ATTACK; the order
 otherwise persists across rounds. Typing in chat never issues an order.
 
 Confirmed gameplay events and accepted commands route to a separate
-WingmanRadioDirector. It selects clean prerecorded MP3 files from a validated
-manifest using context filters, weighted choice, priorities, cooldowns and
-no-repeat rules. The contexts are STANDARD, ELITE and BOSS, with encounter ID
-and optional phase ID hooks. Bounded preload/cache avoids decoding the whole
-library. Runtime Web Audio applies radio filters and flight ducking. Higher
-priority can interrupt lower priority. Ambient is randomized and eligible only
-during standard combat after sufficient silence. AWACS text stays separate.
-The [radio directory guide](docs/wingman/prerecorded-radio.md) documents the
-tree, manifest schema and semantic filenames.
+WingmanRadioDirector. The repository contains 186 approved generic Pixy MP3s
+in command, reaction and ambient folders. `npm run audio:manifest` inventories
+them and extracts each exact subtitle from `Pixy Voiceline Script.md`; it
+excludes missing or unmapped clips and never invents a transcript. Run
+`npm run audio:check` to verify the committed manifest against files and script.
+The [radio directory guide](docs/wingman/prerecorded-radio.md) documents pools
+and filenames.
 
-M7-A includes empty pools and **no Pixy MP3 files**. Gameplay radio is silent
-until M7-B integrates approved recordings and tunes playback by listening.
-There is no neural TTS, voice-cloning inference or TTS endpoint.
-[M7-A validation](docs/m7a-validation.md) records checks and limits. The
-[earlier TTS experiment](docs/m7-validation.md) is historical only.
+Radio uses category filters, weighted choice, event probabilities, pool and line
+cooldowns, and a recent-ID window to avoid repetition. Accepted ATTACK/REGROUP
+orders always attempt an acknowledgement. Kill and missile reactions can remain
+silent; ambient lines select calm, standard, or pressure from local threat and
+quiet-time state, on a randomized 25–70 second interval. Higher priority lines
+can interrupt lower priority lines. A bounded decoded AudioBuffer cache warms a
+few core lines; the rest load on demand. Web Audio adds a light radio band,
+compression, subtle static and smooth flight-audio ducking at playback. The
+selected script subtitle appears in cyan at the top center only while the MP3
+plays. The camera controls remain available on **C** and held **V**.
+
+Generic radio currently plays in STANDARD encounters only. Elite/Boss radio
+keys remain available for their own future recordings; those prototype rounds
+stay silent. Free-form LLM chat uses only text and procedural mumble. One Pixy
+channel prevents chat and prerecorded radio from overlapping: chat submitted
+during a clip waits to contact the backend until it ends, and radio events that
+occur during chat are skipped. AWACS stays separate. There is no neural TTS,
+voice-cloning inference or TTS endpoint. See [M7-B validation](docs/m7b-validation.md),
+[M7-A validation](docs/m7a-validation.md), and the historical
+[TTS experiment](docs/m7-validation.md).
 ## How to play
 
-Select **Launch Sortie**, choose PIXY's aircraft in Flight Operations, then launch round 1, a six-aircraft Silent Tide patrol. PILOT 1 remains the procedural F-15C. Destroy every hostile to clear the round, then select the next engagement and **Continue Sortie**, or open **Hangar / Change PIXY** first. Rounds have no final limit; losing PILOT 1 ends the run.
+Select **Launch Sortie**, choose PIXY's aircraft in Flight Operations, then launch round 1, a 20-aircraft Silent Tide patrol (10 MiG-29 and 10 Su-27). PILOT 1 remains the procedural F-15C and starts a fresh run with 120 missiles. Destroy every hostile to clear the round, then select the next engagement and **Continue Sortie**, or open **Hangar / Change PIXY** first. Rounds have no final limit; losing PILOT 1 ends the run.
 
 Health, missiles, flares, aircraft position, and flight state carry between rounds. There is no intermission repair or rearm; the cannon has unlimited ammunition. PIXY's HP, destruction and weapon cooldowns also persist. Combat and its timers stop during intermission/hangar. Closing the encounter dialog leaves the run suspended; **Select Engagement** reopens it. Closing the hangar returns to the selected encounter. **Fly Again** after aircraft loss, or **Restart Run** from pause, opens aircraft selection for a fresh run.
 
@@ -200,14 +213,14 @@ Available encounters:
 
 | Encounter | Category | Contacts | Durability | Reward per aircraft |
 | --- | --- | --- | --- | --- |
-| Silent Tide | Standard | 6 | 1 missile / 3 cannon hits | 1,200 |
+| Silent Tide | Standard | 20 | 1 missile / 3 cannon hits | 1,200 |
 | Border Patrol | Standard | 3 | 1 missile / 3 cannon hits | 1,200 |
 | Elite Flight | Elite prototype | 4 | 2 missiles / 6 cannon hits | 2,200 |
 | Heavy Contact | Boss prototype | 1 | 4 missiles / 12 cannon hits | 6,000 |
 
 Elite and Boss use the existing procedural aircraft and patrol behavior with different stats. They do not include advanced AI, boss phases, or special weapons.
 
-The HUD includes a pitch ladder, compass, airspeed, altitude, targeting cues, weapons, square radar, and aircraft status. The heading-relative radar retains its 8 km scale and north marker, clamps distant contacts to square edges, and distinguishes PILOT 1's center symbol, cyan PIXY diamond/“2”, hostile dots and the amber selected hostile. Hold **V** to look behind from Chase or Cockpit; release restores the selected camera immediately. Sound starts muted; use the speaker button to enable the synthesized engine and combat effects.
+The HUD includes a pitch ladder, compass, airspeed, altitude, targeting cues, weapons, a 224 px desktop square radar, and aircraft status. Chat sits upper-left; the mission panel sits upper-right with sector and weather below it. Pixy orders sit beside the radar and recorded subtitles occupy the former top-center camera control area. The heading-relative radar retains its 8 km scale and north marker, clamps distant contacts to square edges, and distinguishes PILOT 1's center symbol, cyan PIXY diamond/“2”, hostile dots and the amber selected hostile. Hold **V** to look behind from Chase or Cockpit; release restores the selected camera immediately. Sound starts muted; use the speaker button to enable the synthesized engine and combat effects.
 
 | Input | Action |
 | --- | --- |
@@ -221,6 +234,7 @@ The HUD includes a pitch ladder, compass, airspeed, altitude, targeting cues, we
 | Tab | Cycle living hostile targets; clear lock |
 | L | Request / cancel missile lock |
 | 1 / 2 | Select missiles / cannon |
+| 3 / 4 | Order Pixy to attack / regroup |
 | F | Deploy flares |
 | C | Switch chase / cockpit camera |
 | V (hold) | Rear view; release to restore selected camera |
@@ -249,17 +263,20 @@ Small screens and larger touchscreens show steering, fire, target and LOCK butto
 - `src/world.js`: procedural terrain, ocean, sky, and aircraft geometry.
 - `src/hud.js`: canvas flight instruments and tactical radar.
 - `src/audio.js`: procedural Web Audio engine and combat sounds.
+- `src/audio/wingman-radio.js`: prerecorded radio selection, context, priority, cache and ambient scheduling.
+- `src/comms/wingman-channel.js`: exclusive ownership between Pixy chat and radio.
+- `scripts/build-pixy-manifest.mjs`: script-to-MP3 manifest generation and validation.
 - `src/style.css`: responsive interface styling.
 
 ## Development checks
 
-Run `npm test` for the lightweight Node tests and `npm run build` for production validation. No test dependency is required. Tests cover consecutive rounds, kill ownership, hangar transitions, deterministic wingman flight, weapons, laser duration/cooldown, damage/destruction, hardpoints, manual locking, square radar bounds and snapshot isolation. See [M4–M5 validation](docs/m4-m5-validation.md) for browser checks and their limits.
+Run `npm test`, `npm run audio:check`, and `npm run build` for validation. No test dependency is required. Tests cover manifest/script/asset consistency, radio selection and chat arbitration in addition to prior gameplay. See [M7-B validation](docs/m7b-validation.md) for browser checks and limits.
 
 `window.__flight.getState()` returns a detached debugging snapshot, including phase, round, score, kill sources, encounter and flight telemetry, selected wingman aircraft, HP/alive/AI/target state, weapon timers, model loading status/normalization, manual lock and rear view. It exposes no mutable simulation or Three.js references.
 
 Round progression is `READY → HANGAR → COMBAT → ROUND_CLEAR → INTERMISSION → COMBAT`, with optional `INTERMISSION → HANGAR → INTERMISSION → COMBAT` and `GAME_OVER` on player loss. Pause remains separate. RoundDirector checks living enemies independently of kill ownership. Add compositions and stats to the encounter catalog to define another encounter.
 
-M1–M6 are implemented within the current scope: one fixed player aircraft, two wingman choices and optional text conversation. M7-A adds synchronized procedural chat mumble, deterministic wingman commands and an empty manifest-driven prerecorded radio scaffold. Real MP3s arrive in M7-B. Final Elite/Boss mechanics, advanced dogfighting, physical landing, microphone/STT and saves remain out of scope. `boss_air-destroyer.glb` remains untouched at the repository root for M9.
+M1–M7-A are complete within the current scope. M7-B integrates the approved generic Pixy recordings for STANDARD encounters. Final Elite/Boss audio and mechanics, advanced dogfighting, physical landing, microphone/STT and saves remain out of scope. `boss_air-destroyer.glb` remains untouched at the repository root for M9.
 
 ## Aircraft assets and combat units
 
@@ -269,4 +286,4 @@ Original geometry, skinning and materials remain intact. A wrapper applies a 180
 
 Catalog HP/damage are authoritative. The adapter uses **10 wingman HP = 1 existing combat unit**: a 30-damage wingman missile deals 3 existing enemy HP, a 3-damage bullet deals 0.3, and the laser deals 5/sec. A legacy 24-unit incoming hit deals 240 wingman HP. Player weapons, enemy HP and their existing time-to-kill are unchanged. Wingman cannon rate/AI and replacement rules remain tuning items.
 
-Scenery, player/enemy aircraft, interface and flight sounds remain procedural. Wingman visuals are supplied external assets; their authorship/license/redistribution terms still need to be recorded before public distribution. Draco's bundled decoder is Apache-2.0 licensed (see the Three.js package's `examples/jsm/libs/draco/README.md`). No soundtrack or voice recordings are included. This is an independent fan project, unaffiliated with Bandai Namco. Ace Combat and related names belong to their respective owners.
+Scenery, player/enemy aircraft, interface and flight sounds remain procedural. Approved runtime Pixy MP3 clips are included; private source/master recordings remain outside the repository. Wingman visuals are supplied external assets; their authorship/license/redistribution terms still need to be recorded before public distribution. Draco's bundled decoder is Apache-2.0 licensed (see the Three.js package's `examples/jsm/libs/draco/README.md`). No soundtrack is included. This is an independent fan project, unaffiliated with Bandai Namco. Ace Combat and related names belong to their respective owners.

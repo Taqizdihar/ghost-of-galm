@@ -1,4 +1,4 @@
-// Conservative runtime coloration for clean prerecorded MP3s; tune with M7-B assets.
+// Conservative runtime coloration for clean prerecorded MP3s.
 export const RADIO_PRESETS = Object.freeze({
   COMBAT: Object.freeze({ highPassHz: 300, lowPassHz: 3600, threshold: -22, ratio: 2.5, distortion: .025, staticGain: .012, outputGain: .8, duckGain: .62 }),
   INTERMISSION: Object.freeze({ highPassHz: 160, lowPassHz: 6500, threshold: -20, ratio: 2, distortion: .015, staticGain: .007, outputGain: 1.15, duckGain: .65 }),
@@ -9,7 +9,7 @@ export const radioPreset = mode => RADIO_PRESETS[mode] || RADIO_PRESETS.HANGAR;
 export async function playRadioClip(audio, encoded, { mode, signal } = {}) {
   const context = audio.context;
   if (signal?.aborted || audio.muted || context?.state !== 'running') throw new Error('Audio unavailable');
-  const buffer = await context.decodeAudioData(encoded.slice(0));
+  const buffer = encoded instanceof ArrayBuffer ? await context.decodeAudioData(encoded.slice(0)) : encoded;
   if (signal?.aborted || audio.muted || context.state !== 'running') throw new Error('Audio unavailable');
   const preset = radioPreset(mode), nodes = [], sources = [];
   let finished = false, resolveEnded;
@@ -58,10 +58,10 @@ export async function playRadioClip(audio, encoded, { mode, signal } = {}) {
         noise.connect(gain); gain.connect(hp); noise.start(t + offset);
       }
     }
-    audio.duckFlight(preset.duckGain);
     source.onended = finish;
     signal?.addEventListener('abort', stop, { once: true });
     source.start(t);
+    audio.duckFlight(preset.duckGain);
     return { ended, stop, duration: buffer.duration, startedAt: performance.now() };
   } catch (error) { stop(); throw error; }
 }

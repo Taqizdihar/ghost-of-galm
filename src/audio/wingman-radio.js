@@ -11,18 +11,19 @@ export const RADIO_KEYS = Object.freeze([
 ]);
 export const RADIO_BASE = '/assets/audio/wingman/pixy/';
 const EVENT_CHANCE = Object.freeze({
-  'event.playerKill': .45, 'event.playerHit': .65, 'event.playerDanger': .8,
-  'event.wingmanHit': .65, 'event.wingmanKill': .5, 'event.wingmanMissile': .4,
+  'event.playerKill': .4, 'event.playerHit': .6, 'event.playerDanger': .75,
+  'event.wingmanHit': .6, 'event.wingmanKill': .45, 'event.wingmanMissile': .32,
   'event.combatStart': .7, 'event.combatEnd': .7,
 });
 const POOL_COOLDOWN = Object.freeze({
-  'event.playerKill': 8000, 'event.playerHit': 10000, 'event.playerDanger': 16000,
-  'event.wingmanHit': 10000, 'event.wingmanKill': 8000, 'event.wingmanMissile': 12000,
+  'event.playerKill': 9000, 'event.playerHit': 10000, 'event.playerDanger': 14000,
+  'event.wingmanHit': 10000, 'event.wingmanKill': 9000, 'event.wingmanMissile': 12000,
+  'event.combatStart': 15000, 'event.combatEnd': 15000,
   'ambient.standard': 45000, 'ambient.pressure': 45000, 'ambient.calm': 45000,
 });
 const slug = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const safePath = /^(?:commands|reactions|ambient|elite|bosses)\/(?:[a-z0-9_-]+\/)*pixy_(?:cmd|evt|amb|elite|boss)_[a-z0-9_]+_\d{3}\.mp3$/;
-const pathPrefix = Object.freeze({
+export const RADIO_PATH_PREFIX = Object.freeze({
   'command.attack': 'commands/attack/pixy_cmd_attack_',
   'command.regroup': 'commands/regroup/pixy_cmd_regroup_',
   'command.attackTarget': 'commands/attack-target/pixy_cmd_attack_target_',
@@ -41,7 +42,7 @@ const pathPrefix = Object.freeze({
   'ambient.calm': 'ambient/calm/pixy_amb_calm_',
 });
 function expectedPrefix(key) {
-  if (pathPrefix[key]) return pathPrefix[key];
+  if (RADIO_PATH_PREFIX[key]) return RADIO_PATH_PREFIX[key];
   const [kind, slugName, stage] = key.split('.');
   const stem = slugName.replaceAll('-', '_');
   if (kind === 'elite') return `elite/${slugName}/${stage}/pixy_elite_${stem}_${stage}_`;
@@ -58,13 +59,13 @@ export function validRadioContext(context) {
 }
 export function validateManifest(raw) {
   if (!raw || raw.version !== 1 || raw.speaker !== 'pixy' || raw.format !== 'mp3' || !raw.pools || typeof raw.pools !== 'object') return structuredClone(EMPTY_MANIFEST);
-  const seen = new Set(), result = {};
+  const seen = new Set(), seenFiles = new Set(), result = {};
   for (const [key, entries] of Object.entries(raw.pools)) {
     if (!RADIO_KEYS.includes(key) && !/^(elite|boss)\.[a-z0-9-]+\.(intro|combat|defeat|phase-[0-9]{2})$/.test(key)) continue;
     const special = key.startsWith('elite.') || key.startsWith('boss.');
     const [, expectedEncounter, expectedPhase] = special ? key.split('.') : [];
     result[key] = Array.isArray(entries) ? entries.flatMap(entry => {
-      if (!entry || typeof entry !== 'object' || typeof entry.id !== 'string' || seen.has(entry.id) ||
+      if (!entry || typeof entry !== 'object' || typeof entry.id !== 'string' || seen.has(entry.id) || seenFiles.has(entry.file) ||
           !/^pixy_(?:cmd|evt|amb|elite|boss)_[a-z0-9_]+_\d{3}$/.test(entry.id) ||
           typeof entry.file !== 'string' || !safePath.test(entry.file) || !entry.file.startsWith(expectedPrefix(key)) || !entry.file.endsWith(`${entry.id}.mp3`) ||
           typeof entry.subtitle !== 'string' || !entry.subtitle.trim() || entry.subtitle.length > 240 ||
@@ -78,7 +79,7 @@ export function validateManifest(raw) {
           (entry.phaseId != null && (typeof entry.phaseId !== 'string' || !slug.test(entry.phaseId))) ||
           (special && (entry.encounterId !== expectedEncounter ||
             (expectedPhase.startsWith('phase-') && entry.phaseId !== expectedPhase)))) return [];
-      seen.add(entry.id);
+      seen.add(entry.id); seenFiles.add(entry.file);
       return [{ id: entry.id, file: entry.file, subtitle: entry.subtitle, weight: entry.weight ?? 1,
         priority: entry.priority ?? null, cooldownMs: entry.cooldownMs ?? 0,
         contexts: entry.contexts || null, excludeContexts: entry.excludeContexts || [],
@@ -95,10 +96,18 @@ export function eligibleLines(lines, context, recent, lineTimes, now, poolTime =
     (!line.encounterId || line.encounterId === context.encounterId) &&
     (!line.phaseId || line.phaseId === context.phaseId) &&
     now - (lineTimes.get(line.id) ?? -Infinity) >= line.cooldownMs);
+  const fresh = possible.filter(line => !recent.includes(line.id));
+  if (fresh.length) return fresh;
   const alternatives = possible.filter(line => line.id !== recent.at(-1));
   if (alternatives.length) return alternatives;
   // A one-line pool can be reused after real silence; it never fires twice at once.
   return possible.filter(line => now - (lineTimes.get(line.id) ?? -Infinity) >= 10000);
+}
+export function selectAmbientPool({ incoming = false, recentDangerMs = Infinity, quietMs = 0, nearbyHostiles = 0 } = {}) {
+  if (incoming) return null;
+  if (recentDangerMs < 18000 || nearbyHostiles >= 4) return 'ambient.pressure';
+  if (recentDangerMs > 30000 && quietMs > 22000 && nearbyHostiles <= 1) return 'ambient.calm';
+  return 'ambient.standard';
 }
 export function weightedLine(lines, random = Math.random) {
   const total = lines.reduce((sum, line) => sum + line.weight, 0);
@@ -125,11 +134,11 @@ export function priorityFor(key) {
 }
 
 export function createWingmanRadioDirector({ audio, fetchImpl = fetch, random = Math.random,
-  now = () => performance.now(), getContext = () => ({}), onLine = () => {}, onStop = () => {} }) {
+  now = () => performance.now(), getContext = () => ({}), channel = null, onLine = () => {}, onStop = () => {} }) {
   let manifest = structuredClone(EMPTY_MANIFEST), loaded = false, current = null, generation = 0;
   let lastAudio = now(), ambientAt = now() + 30000;
   const recent = [], lineTimes = new Map(), poolTimes = new Map(), cache = new Map();
-  const nextAmbient = () => now() + 28000 + random() * 30000;
+  const nextAmbient = () => now() + 25000 + random() * 45000;
   async function load() {
     try {
       const response = await fetchImpl(`${RADIO_BASE}manifest.json`);
@@ -139,33 +148,44 @@ export function createWingmanRadioDirector({ audio, fetchImpl = fetch, random = 
     void preload('core');
     return manifest;
   }
-  async function encoded(line) {
-    if (cache.has(line.id)) return cache.get(line.id);
-    const response = await fetchImpl(RADIO_BASE + line.file);
-    if (!response.ok) throw Error('Radio clip unavailable');
-    const media = response.headers?.get?.('content-type');
-    if (media && !/audio\/(?:mpeg|mp3)|application\/octet-stream/i.test(media)) throw Error('Invalid radio clip');
-    const bytes = await response.arrayBuffer();
-    cache.set(line.id, bytes);
-    if (cache.size > 12) cache.delete(cache.keys().next().value);
-    return bytes;
+  async function bufferFor(line) {
+    if (cache.has(line.id)) {
+      const cached = cache.get(line.id); cache.delete(line.id); cache.set(line.id, cached);
+      return cached;
+    }
+    const task = (async () => {
+      const response = await fetchImpl(RADIO_BASE + line.file);
+      if (!response.ok) throw Error('Radio clip unavailable');
+      const media = response.headers?.get?.('content-type');
+      if (media && !/audio\/(?:mpeg|mp3)|application\/octet-stream/i.test(media)) throw Error('Invalid radio clip');
+      const bytes = await response.arrayBuffer();
+      return audio.decodeRadio ? audio.decodeRadio(bytes) : bytes;
+    })();
+    cache.set(line.id, task);
+    if (cache.size > 16) cache.delete(cache.keys().next().value);
+    try { return await task; } catch (error) { cache.delete(line.id); throw error; }
   }
   async function preload(policy) {
+    if (audio.decodeRadio && audio.context?.state !== 'running') return;
     const context = validRadioContext(getContext());
-    const list = Object.values(manifest.pools).flat().filter(line => line.preload === policy &&
+    const keys = policy === 'core' ? ['command.attack', 'command.regroup', 'event.playerDanger', 'event.gameOver', 'event.playerHit', 'event.wingmanHit'] : Object.keys(manifest.pools);
+    const list = keys.flatMap(key => (manifest.pools[key] || []).filter(line => line.preload === policy &&
       (!line.encounterId || line.encounterId === context.encounterId) &&
-      (!line.contexts || line.contexts.includes(context.encounterCategory)));
-    await Promise.allSettled(list.slice(0, 16).map(encoded));
+      (!line.contexts || line.contexts.includes(context.encounterCategory))).slice(0, policy === 'core' ? 1 : 2));
+    await Promise.allSettled(list.slice(0, 12).map(bufferFor));
   }
-  function cancel() {
+  function cancel(releaseChannel = true) {
+    const hadCurrent = !!current;
     generation++;
     current?.controller.abort(); current?.playback?.stop(); current = null;
     audio.duckFlight(1);
     onStop();
+    if (hadCurrent && releaseChannel) channel?.radioFinished();
   }
   function trigger(key, { probability = null, poolCooldownMs = null } = {}) {
     const context = validRadioContext(getContext());
-    if (audio.muted) return false;
+    if (audio.muted || (channel && !channel.canStartRadio())) return false;
+    if (RADIO_KEYS.includes(key) && context.encounterCategory !== 'STANDARD') return false;
     if (key.startsWith('elite.') && (context.encounterCategory !== 'ELITE' || key.split('.')[1] !== context.encounterId)) return false;
     if (key.startsWith('boss.') && (context.encounterCategory !== 'BOSS' || key.split('.')[1] !== context.encounterId)) return false;
     const lines = (manifest.pools[key] || []).filter(line => !key.startsWith('ambient.') ||
@@ -177,33 +197,36 @@ export function createWingmanRadioDirector({ audio, fetchImpl = fetch, random = 
     const basePriority = priorityFor(key);
     // Manifest priority tunes order within its semantic tier without inverting it.
     const priority = line.priority == null ? basePriority : Math.min(basePriority + 1, Math.max(basePriority - 1, line.priority));
-    if (current && priority <= current.priority) return false;
-    cancel();
+    const replacesCommand = current?.key.startsWith('command.') && key.startsWith('command.') && current.key !== key;
+    if (current && priority <= current.priority && !replacesCommand) return false;
+    if (current) cancel(false);
+    else if (channel && !channel.reserveRadio()) return false;
     const controller = new AbortController(), id = generation;
-    current = { key, priority, controller, playback: null };
+    current = { key, line, priority, controller, playback: null };
     recent.push(line.id); if (recent.length > 8) recent.shift();
     lineTimes.set(line.id, now()); poolTimes.set(key, now());
     lastAudio = now(); ambientAt = nextAmbient();
     void (async () => {
       try {
-        const bytes = await encoded(line);
+        const buffer = await bufferFor(line);
         if (id !== generation || controller.signal.aborted) return;
-        const playback = await audio.playRadio(bytes, { mode: 'COMBAT', signal: controller.signal });
+        const playback = await audio.playRadio(buffer, { mode: 'COMBAT', signal: controller.signal });
         if (id !== generation) { playback.stop(); return; }
-        current.playback = playback; onLine({ key, subtitle: line.subtitle, duration: playback.duration });
+        current.playback = playback; onLine({ key, lineId: line.id, subtitle: line.subtitle, duration: playback.duration, startedAt: playback.startedAt });
         await playback.ended;
       } catch { /* Missing/invalid MP3 remains optional. */ }
-      finally { if (id === generation) { current = null; lastAudio = now(); onStop(); } }
+      finally { if (id === generation) { current = null; lastAudio = now(); onStop(); channel?.radioFinished(); } }
     })();
     return true;
   }
-  function tick(active) {
-    if (!active || now() < ambientAt || current) return;
+  function tick(active, state = {}) {
+    if (!active || now() < ambientAt || current || (channel && !channel.canStartRadio())) return;
     ambientAt = nextAmbient();
     if (now() - lastAudio < 20000) return;
     const context = validRadioContext(getContext());
-    const pool = manifest.pools['ambient.standard'];
-    if (pool?.length) trigger('ambient.standard', { probability: .55, poolCooldownMs: 45000 });
+    if (context.encounterCategory !== 'STANDARD') return;
+    const key = selectAmbientPool(state);
+    if (key && manifest.pools[key]?.length) trigger(key, { probability: .55, poolCooldownMs: 45000 });
   }
   return { load, trigger, tick, cancel, preload,
     setManifest(raw) { cancel(); manifest = validateManifest(raw); loaded = true; },
@@ -211,6 +234,8 @@ export function createWingmanRadioDirector({ audio, fetchImpl = fetch, random = 
     elite(stage, encounterId) { return trigger(`elite.${encounterId}.${stage}`); },
     boss(stage, encounterId) { return trigger(`boss.${encounterId}.${stage}`); },
     snapshot() { return { manifestLoaded: loaded, audioAvailable: Object.values(manifest.pools).some(p => p.length),
-      currentKey: current?.key ?? null, queueLength: 0, context: validRadioContext(getContext()) }; },
+      availableLineCount: Object.values(manifest.pools).reduce((n, p) => n + p.length, 0),
+      currentKey: current?.key ?? null, currentLineId: current?.line.id ?? null, currentSubtitle: current?.playback ? current.line.subtitle : null,
+      cacheCount: cache.size, radioBusy: !!current, queueLength: 0, context: validRadioContext(getContext()) }; },
   };
 }
