@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { aircraftForward, hardpointWorld } from './attachments.js';
 import { beamIntersection, toCombatDamage } from '../combat/damage.js';
+import { createWingmanCommandState, WingmanCommand } from './commands.js';
 
 const UP = new THREE.Vector3(0, 1, 0);
 const clamp = THREE.MathUtils.clamp;
@@ -20,6 +21,16 @@ export function createWingman(asset, scene, player, terrainHeight, combat) {
   if (definition.weapons.laser) scene.add(laser);
   let missileSide = false;
   let laserHitCooldown = 0;
+  const commands = createWingmanCommandState();
+  wingman.command = WingmanCommand.ATTACK;
+  wingman.setCommand = (command, active) => {
+    if (!commands.accept(command, active, wingman.alive)) return false;
+    wingman.command = commands.current;
+    if (command === WingmanCommand.REGROUP) {
+      wingman.target = null; wingman.laserRemaining = 0; laser.visible = false;
+    }
+    return true;
+  };
 
   function formationPosition() {
     return destination.set(75, 28, 110).applyAxisAngle(UP, -player.heading).add(player.position);
@@ -56,7 +67,8 @@ export function createWingman(asset, scene, player, terrainHeight, combat) {
     if (wingman.target && (!wingman.target.alive || position.distanceTo(wingman.target.mesh.position) > 9500)) {
       wingman.target = null; wingman.regroupRemaining = 2;
     }
-    if (!wingman.target && wingman.regroupRemaining <= 0 && playerDistance < 8000) {
+    if (wingman.command === WingmanCommand.REGROUP) wingman.target = null;
+    if (wingman.command === WingmanCommand.ATTACK && !wingman.target && wingman.regroupRemaining <= 0 && playerDistance < 8000) {
       // Stable distance/id ordering; no random decisions or network inference.
       wingman.target = enemies.filter(e => e.alive && e.mesh.position.distanceTo(player.position) < 8500)
         .sort((a, b) => position.distanceToSquared(a.mesh.position) - position.distanceToSquared(b.mesh.position) || a.id - b.id)[0] || null;
@@ -67,7 +79,7 @@ export function createWingman(asset, scene, player, terrainHeight, combat) {
       const side = Math.floor(wingman.age / 4) % 2 ? 1 : -1;
       destination.copy(position).add(aircraftForward(wingman.mesh).multiplyScalar(700));
       destination.x += side * 500; destination.y += 220;
-    } else if (wingman.target && playerDistance < 9500 && wingman.regroupRemaining <= 0) {
+    } else if (wingman.command === WingmanCommand.ATTACK && wingman.target && playerDistance < 9500 && wingman.regroupRemaining <= 0) {
       wingman.aiState = 'ENGAGE'; destination.copy(wingman.target.mesh.position);
     } else {
       wingman.aiState = position.distanceTo(destination) > 220 ? 'REGROUP' : 'FORMATION';
@@ -110,6 +122,7 @@ export function createWingman(asset, scene, player, terrainHeight, combat) {
     if (canEngage && !wingman.missileCooldown && range > 250 && range < missile.range && dot > missile.minDot && !combat.hasMissile(target)) {
       missileSide = !missileSide;
       combat.fireMissile(hardpointWorld(wingman, missileSide ? 'missileLeft' : 'missileRight'), forward, target, toCombatDamage(missile.damage));
+      combat.onMissileFired?.();
       wingman.missileCooldown = missile.cooldown;
     }
     if (canEngage && !wingman.cannonCooldown && range < cannon.range && dot > cannon.minDot) {
@@ -140,7 +153,7 @@ export function createWingman(asset, scene, player, terrainHeight, combat) {
     }
   };
   wingman.getSnapshot = () => ({
-    aircraftId: definition.id, name: definition.name, hp: wingman.hp, maxHP: definition.maxHP,
+    aircraftId: definition.id, name: definition.name, hp: wingman.hp, maxHP: definition.maxHP, command: wingman.command,
     alive: wingman.alive, aiState: wingman.aiState, targetId: wingman.target?.alive ? wingman.target.id : null,
     position: wingman.mesh.position.toArray(), forward: aircraftForward(wingman.mesh).toArray(),
     assetStatus: wingman.assetStatus, normalization: wingman.normalization ? structuredClone(wingman.normalization) : null,

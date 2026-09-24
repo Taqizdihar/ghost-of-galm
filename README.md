@@ -77,7 +77,7 @@ WINGMAN_LLM_BASE_URL=http://127.0.0.1:11434
 Keep `.env` private; Git ignores it. Provider/model configuration never enters
 frontend code. Vite development and preview proxy `/api/wingman/chat` to port
 8000. A static production deployment needs its own same-origin reverse proxy
-for that endpoint; the backend is intended for local development, not public
+for `/api/wingman/*`; the backend is intended for local development, not public
 unauthenticated hosting. No wildcard CORS is enabled.
 
 `server/providers/base.py` defines the replaceable async provider interface.
@@ -86,8 +86,8 @@ server-side key authentication, constrained JSON output and minimal thinking.
 The Ollama adapter uses its documented [chat API](https://docs.ollama.com/api/chat),
 structured JSON, and disabled [thinking output](https://docs.ollama.com/capabilities/thinking).
 Only validated final dialogue is returned as `{text, mode, emotion}`; emotion is
-reserved for future delivery and never displayed. Full responses arrive once,
-then animate locally. No TTS, microphone, STT or gameplay commands are implemented.
+an allowlisted mumble style hint, never displayed. Full responses arrive once,
+then animate locally. Microphone and STT remain future scope.
 
 The backend reads [the canonical lorebook](docs/wingman/lorebook.md) directly from
 the repository on each request. It is not copied into JavaScript or the web
@@ -97,7 +97,7 @@ bundle. Larry calls the current player **Kid**; current-operation labels use
 The dedicated `buildWingmanContext()` allowlist contains exactly:
 
 - `mode`: COMBAT, INTERMISSION or HANGAR. READY maps to HANGAR; ROUND_CLEAR
-  maps to INTERMISSION; GAME_OVER maps to COMBAT for a brief concerned reaction.
+  maps to INTERMISSION; GAME_OVER maps to COMBAT for later conversation context.
   Pause retains its underlying phase's mode.
 - `wingman`: nullable `{aircraft, hp, maxHP, alive, state, special}`. Special is
   NONE, READY, ACTIVE or COOLDOWN. Preflight may have no active aircraft yet.
@@ -117,15 +117,10 @@ multiplayer validation.
 History stays in this page's memory: up to 12 messages (six exchanges), further
 limited to 6,000 characters in both frontend and backend. Reloading or starting
 a replacement run clears it. Initial preflight discussion carries into round 1.
-Failed/cancelled requests and automatic reactions do not become dialogue history.
-Confirmed events provide limited tactical continuity instead.
-
-Player kills, player hits, wingman hits and game over can request short model
-reactions. Event IDs are deduplicated, ordinary reactions have a 12-second global
-cooldown, and failures impose 30 seconds of automatic-reaction backoff. Game over
-can preempt stale dialogue once; it respects offline backoff. Busy ordinary
-reactions are dropped, not queued. Combat start/end and detected hostile losses
-are recorded as context. AWACS stays on its own channel.
+Failed/cancelled requests do not become dialogue history. Confirmed gameplay
+events provide limited tactical continuity when the player next asks. Routine
+kills, hits and game over never create automatic LLM replies. AWACS stays on
+its own channel.
 
 Requests have a 25-second browser deadline and the configurable backend deadline
 (20 seconds by default). Cancel, phase changes and run transitions discard stale
@@ -148,6 +143,42 @@ or used as a fallback. See [M6 validation](docs/m6-validation.md) for evidence a
 limits; real Qwen personality and prompt-resistance evaluation still need local
 inference on a machine running Ollama.
 
+## Wingman audio architecture (M7-A)
+
+LLM chat remains text. Larry's reply reveals one word at a time; the same
+typing timeline calls a small browser-generated Web Audio mumble grain for each
+visible word. The sound is nonverbal, uses no samples or network request, and
+is optional through **CHAT MUMBLE**. Global mute overrides it. Comma, sentence
+ending, question, exclamation and ellipsis timing follow the word reveal.
+Controlled mode and emotion enums change its envelope and pitch slightly.
+Reveal full message, close chat, mute and run changes stop it. Reduced-motion
+mode reveals text immediately and plays no mumble.
+
+Automatic gameplay events no longer ask Gemini or Ollama for reactions. They
+remain in the allowlisted recent context for a later player message.
+**3** orders PIXY to **ATTACK**, restoring normal proactive local combat.
+**4** orders **REGROUP**, clearing his target and returning toward formation
+while terrain avoidance and evasion remain active. HUD buttons provide mouse
+and touch access. Commands work only in active unpaused combat with a living
+wingman. A new run or replacement aircraft starts in ATTACK; the order
+otherwise persists across rounds. Typing in chat never issues an order.
+
+Confirmed gameplay events and accepted commands route to a separate
+WingmanRadioDirector. It selects clean prerecorded MP3 files from a validated
+manifest using context filters, weighted choice, priorities, cooldowns and
+no-repeat rules. The contexts are STANDARD, ELITE and BOSS, with encounter ID
+and optional phase ID hooks. Bounded preload/cache avoids decoding the whole
+library. Runtime Web Audio applies radio filters and flight ducking. Higher
+priority can interrupt lower priority. Ambient is randomized and eligible only
+during standard combat after sufficient silence. AWACS text stays separate.
+The [radio directory guide](docs/wingman/prerecorded-radio.md) documents the
+tree, manifest schema and semantic filenames.
+
+M7-A includes empty pools and **no Pixy MP3 files**. Gameplay radio is silent
+until M7-B integrates approved recordings and tunes playback by listening.
+There is no neural TTS, voice-cloning inference or TTS endpoint.
+[M7-A validation](docs/m7a-validation.md) records checks and limits. The
+[earlier TTS experiment](docs/m7-validation.md) is historical only.
 ## How to play
 
 Select **Launch Sortie**, choose PIXY's aircraft in Flight Operations, then launch round 1, a six-aircraft Silent Tide patrol. PILOT 1 remains the procedural F-15C. Destroy every hostile to clear the round, then select the next engagement and **Continue Sortie**, or open **Hangar / Change PIXY** first. Rounds have no final limit; losing PILOT 1 ends the run.
@@ -228,7 +259,7 @@ Run `npm test` for the lightweight Node tests and `npm run build` for production
 
 Round progression is `READY → HANGAR → COMBAT → ROUND_CLEAR → INTERMISSION → COMBAT`, with optional `INTERMISSION → HANGAR → INTERMISSION → COMBAT` and `GAME_OVER` on player loss. Pause remains separate. RoundDirector checks living enemies independently of kill ownership. Add compositions and stats to the encounter catalog to define another encounter.
 
-M1–M5 are implemented within the current scope: one fixed player aircraft and two wingman choices. Final Elite/Boss mechanics, advanced dogfighting, physical landing, voice services and saves remain out of scope. M6 adds optional text conversation. `boss_air-destroyer.glb` remains untouched at the repository root for M9.
+M1–M6 are implemented within the current scope: one fixed player aircraft, two wingman choices and optional text conversation. M7-A adds synchronized procedural chat mumble, deterministic wingman commands and an empty manifest-driven prerecorded radio scaffold. Real MP3s arrive in M7-B. Final Elite/Boss mechanics, advanced dogfighting, physical landing, microphone/STT and saves remain out of scope. `boss_air-destroyer.glb` remains untouched at the repository root for M9.
 
 ## Aircraft assets and combat units
 

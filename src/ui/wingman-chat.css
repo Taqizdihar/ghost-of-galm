@@ -30,6 +30,18 @@
 .chat-actions span { font: 6px var(--mono); color: #91a2a1; margin-right: auto; }
 .chat-actions button, .chat-reveal { padding: 7px; color: var(--mint); background: #25453e; font: 8px var(--mono); }
 .chat-reveal { margin-top: 0; }
+.chat-voice-controls { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; margin-top: 10px; }
+.wingman-command { position: absolute; left: 50%; bottom: 165px; transform: translateX(-50%); z-index: 3; display: flex; gap: 5px; align-items: center; padding: 4px 6px; border: 1px solid #83e5ff55; background: #122930dc; color: #83e5ff; font: 7px var(--mono); white-space: nowrap; }
+.wingman-command button { color: #b9d9d0; background: #25453e; padding: 5px 7px; font: 8px var(--mono); touch-action: manipulation; }
+.wingman-command button[aria-pressed="true"] { color: #122930; background: #83e5ff; }
+.wingman-command button:disabled { opacity: .45; }
+.wingman-command kbd { font-size: 7px; }
+.pixy-radio { position: absolute; left: 50%; bottom: 188px; transform: translateX(-50%); z-index: 3; color: #83e5ff; background: #122930e8; padding: 6px 9px; font: 9px var(--mono); text-align: center; max-width: 55%; }
+.chat-voice-controls label, .chat-voice-status { font: 8px/1.5 var(--mono); color: #a3b9ad; }
+.chat-voice-controls input[type="range"] { width: 75px; accent-color: #83e5ff; }
+.chat-voice-controls input[type="checkbox"] { accent-color: #83e5ff; vertical-align: middle; }
+.chat-voice-stop { padding: 5px; background: #25453e; color: var(--mint); font: 8px var(--mono); }
+.chat-voice-status { margin-top: 5px; }
 .wingman-chat.in-dialog { margin-top: 20px; }
 .in-dialog .chat-response { max-height: 240px; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
@@ -42,6 +54,9 @@
   .game .mission-intro { left: 280px; top: 95px; }
 }
 @media (max-width: 650px) {
+  .wingman-command { bottom: 250px; left: auto; right: 12px; transform: none; }
+  .wingman-command > span, .wingman-command kbd { display: none; }
+  .pixy-radio { bottom: 294px; max-width: 70%; }
   .operations-panel { top: 10px; left: 12px; width: 215px; max-height: calc(100% - 355px); }
   .game .mission-intro { display: none; }
   .wingman-chat { padding: 9px; }

@@ -1,8 +1,9 @@
 import asyncio
+import time
 
 from fastapi import FastAPI, HTTPException
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 
 from .config import Settings
 from .context import ChatRequest, ChatResponse
@@ -24,7 +25,7 @@ def create_app(provider=None, settings=None, lore_loader=load_lorebook):
         return JSONResponse(status_code=422, content={'detail': 'Invalid conversation request.'})
 
     @app.post('/api/wingman/chat', response_model=ChatResponse)
-    async def chat(request: ChatRequest):
+    async def chat(request: ChatRequest, response: Response):
         nonlocal busy
         if busy:
             raise HTTPException(status_code=503, detail=UNAVAILABLE)
@@ -34,7 +35,10 @@ def create_app(provider=None, settings=None, lore_loader=load_lorebook):
             llm = provider or create_provider(config)
             lorebook = lore_loader()
             limit = 160 if request.event or request.context.mode == 'COMBAT' else 300 if request.context.mode == 'INTERMISSION' else 900
+            start = time.perf_counter()
             raw = await asyncio.wait_for(llm.generate(build_messages(request, lorebook), max_tokens=limit), config.timeout)
+            response.headers['Server-Timing'] = f'llm;dur={(time.perf_counter() - start) * 1000:.1f}'
+            response.headers['Cache-Control'] = 'no-store'
             return validate_reply(raw, request)
         except Exception:
             # Network/config/lore/provider failures must not leak prompts or internals.

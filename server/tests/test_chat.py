@@ -41,6 +41,10 @@ class MockProvider:
 
 
 class ChatTests(unittest.TestCase):
+    def test_neural_voice_endpoint_is_absent(self):
+        client = TestClient(create_app(MockProvider()))
+        self.assertEqual(client.post('/api/wingman/tts', json={'text': 'test'}).status_code, 404)
+
     def test_lore_loader_uses_canonical_file_unchanged(self):
         lore = load_lorebook()
         self.assertEqual(lore, LOREBOOK_PATH.read_text(encoding='utf-8'))

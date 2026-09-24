@@ -1,14 +1,20 @@
+import { playRadioClip } from './comms/radio.js';
+
 const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
 
-/** All sounds are synthesized locally. Nothing starts until start() is called. */
+/** Flight effects, chat mumble and prerecorded radio share one master. */
 export class FlightAudio {
   constructor() {
     this.context = null;
     this.master = null;
     this.engine = null;
+    this.flightBus = null;
+    this.voiceBus = null;
+    this.voiceVolume = .8;
     this.muted = false;
     this._starting = null;
     this._lastPlayed = new Map();
+    this._mumbleStops = new Set();
     this._flight = { speed: 650, throttle: 0.5, mode: 'menu' };
   }
 
@@ -32,10 +38,15 @@ export class FlightAudio {
         this.master = context.createGain();
         this.master.gain.value = this.muted ? 0 : 0.55;
         this.master.connect(context.destination);
+        this.flightBus = context.createGain();
+        this.flightBus.connect(this.master);
+        this.voiceBus = context.createGain();
+        this.voiceBus.gain.value = this.voiceVolume;
+        this.voiceBus.connect(this.master);
 
         const bus = context.createGain();
         bus.gain.value = 0.0001;
-        bus.connect(this.master);
+        bus.connect(this.flightBus);
 
         const noiseBuffer = context.createBuffer(1, context.sampleRate * 2, context.sampleRate);
         const samples = noiseBuffer.getChannelData(0);
@@ -84,11 +95,67 @@ export class FlightAudio {
 
   setMuted(muted) {
     this.muted = Boolean(muted);
+    if (this.muted) for (const stop of [...this._mumbleStops]) stop();
     try {
       if (this.master && this.context?.state !== 'closed') {
         this.master.gain.setTargetAtTime(this.muted ? 0 : 0.55, this.context.currentTime, 0.04);
       }
     } catch { /* Audio availability must never interrupt the game. */ }
+  }
+
+  setVoiceVolume(value) {
+    this.voiceVolume = clamp(Number(value) || 0, 0, 1);
+    try { this.voiceBus?.gain.setTargetAtTime(this.voiceVolume, this.context.currentTime, .03); } catch { /* optional device */ }
+  }
+
+  duckFlight(level) {
+    try { this.flightBus?.gain.setTargetAtTime(level, this.context.currentTime, level < 1 ? .035 : .25); } catch { /* optional device */ }
+  }
+
+  playRadio(buffer, options) { return playRadioClip(this, buffer, options); }
+
+  playMumbleGrain({ duration, frequency, gain: level, lowPass, noise }) {
+    const context = this.context;
+    if (this.muted || context?.state !== 'running' || !this.voiceBus) return null;
+    let oscillator, overtone, hiss;
+    const nodes = [];
+    let resolveEnded, stopped = false;
+    const ended = new Promise(resolve => { resolveEnded = resolve; });
+    const stop = () => {
+      if (stopped) return;
+      stopped = true; this._mumbleStops.delete(stop);
+      for (const source of [oscillator, overtone, hiss]) { try { source?.stop(); } catch { /* already ended */ } }
+      for (const node of nodes) { try { node.disconnect(); } catch { /* device closed */ } }
+      resolveEnded();
+    };
+    try {
+      const t = context.currentTime;
+      const filter = context.createBiquadFilter(); nodes.push(filter);
+      filter.type = 'lowpass'; filter.frequency.value = lowPass;
+      const hp = context.createBiquadFilter(); nodes.push(hp);
+      hp.type = 'highpass'; hp.frequency.value = 260;
+      const envelope = context.createGain(); nodes.push(envelope);
+      envelope.gain.setValueAtTime(.0001, t);
+      envelope.gain.exponentialRampToValueAtTime(level, t + .014);
+      envelope.gain.exponentialRampToValueAtTime(.0001, t + duration);
+      filter.connect(hp); hp.connect(envelope); envelope.connect(this.voiceBus);
+      oscillator = context.createOscillator(); nodes.push(oscillator); oscillator.type = 'sawtooth';
+      oscillator.frequency.setValueAtTime(frequency, t);
+      oscillator.frequency.exponentialRampToValueAtTime(frequency * .88, t + duration);
+      oscillator.connect(filter);
+      overtone = context.createOscillator(); nodes.push(overtone); overtone.type = 'triangle';
+      overtone.frequency.value = frequency * 1.98;
+      const overtoneGain = context.createGain(); nodes.push(overtoneGain); overtoneGain.gain.value = .18;
+      overtone.connect(overtoneGain); overtoneGain.connect(filter);
+      hiss = context.createBufferSource(); nodes.push(hiss); hiss.buffer = this._noiseBuffer;
+      const hissGain = context.createGain(); nodes.push(hissGain); hissGain.gain.value = .035 * noise;
+      hiss.connect(hissGain); hissGain.connect(filter);
+      this._mumbleStops.add(stop);
+      oscillator.start(t); overtone.start(t); hiss.start(t, 0);
+      oscillator.stop(t + duration); overtone.stop(t + duration); hiss.stop(t + duration);
+      oscillator.onended = stop;
+      return { stop, ended };
+    } catch { stop(); return null; }
   }
 
   update({ speed = 650, throttle = 0.5, mode = 'menu' } = {}) {
@@ -168,7 +235,7 @@ export class FlightAudio {
     gain.gain.exponentialRampToValueAtTime(volume, time + Math.min(0.015, duration * 0.2));
     gain.gain.exponentialRampToValueAtTime(0.0001, time + duration);
     oscillator.connect(gain);
-    gain.connect(this.master);
+    gain.connect(this.flightBus || this.master);
     oscillator.onended = () => { oscillator.disconnect(); gain.disconnect(); };
     oscillator.start(time);
     oscillator.stop(time + duration + 0.025);
@@ -190,7 +257,7 @@ export class FlightAudio {
     gain.gain.exponentialRampToValueAtTime(0.0001, time + duration);
     source.connect(filter);
     filter.connect(gain);
-    gain.connect(this.master);
+    gain.connect(this.flightBus || this.master);
     source.onended = () => { source.disconnect(); filter.disconnect(); gain.disconnect(); };
     source.start(time, Math.random() * 0.7);
     source.stop(time + duration + 0.025);

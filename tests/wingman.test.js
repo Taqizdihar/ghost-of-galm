@@ -63,14 +63,16 @@ test('formation is smooth and deterministic; threats trigger evasion and target 
 });
 
 test('wingman missiles and cannon use wingman damage ownership; final kill clears through director', () => {
-  const run = createRunState(); let enemy;
+  const run = createRunState(); let enemy, confirmedMissiles = 0;
   const director = createRoundDirector(run, () => [enemy]);
   const game = setup(DEFAULT_WINGMAN_ID, {
     fireMissile: (origin, forward, target, damage) => { assert.equal(damage, 3); assert.ok(origin.distanceTo(game.wingman.mesh.position) < 20); director.recordDestruction(target, 'wingman'); },
+    onMissileFired: () => confirmedMissiles++,
   });
   enemy = enemyAt(game.wingman.mesh.position.clone().add(new THREE.Vector3(0, 0, -2000)));
   director.startRun(); game.wingman.regroupRemaining = 0; game.wingman.missileCooldown = 0;
   game.wingman.update(.05, [enemy]);
+  assert.equal(confirmedMissiles, 1);
   assert.equal(run.killsBySource.wingman, 1); assert.equal(director.checkRoundComplete(), true);
   assert.equal(run.phase, 'ROUND_CLEAR');
   const cannonGame = setup(DEFAULT_WINGMAN_ID, { hasMissile: () => true });

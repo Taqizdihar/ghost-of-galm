@@ -11,11 +11,15 @@ import { renderHangar } from './ui/hangar.js';
 import { DEFAULT_WINGMAN_ID, getWingmanAircraft, playerAircraft } from './aircraft/catalog.js';
 import { loadAircraft, disposeAircraft } from './aircraft/assets.js';
 import { createWingman } from './aircraft/wingman.js';
+import { WingmanCommand } from './aircraft/commands.js';
 import { hardpointWorld } from './aircraft/attachments.js';
 import { toWingmanDamage } from './combat/damage.js';
 import { createManualLock } from './combat/manual-lock.js';
 import { buildWingmanContext, conversationMode, isDetectedHostile } from './comms/context.js';
 import { createConversation } from './comms/conversation.js';
+import { createChatMumble } from './comms/mumble.js';
+import { createWingmanRadioDirector } from './audio/wingman-radio.js';
+import { routeConfirmedEvent } from './audio/gameplay-events.js';
 import { createWingmanChat, isTextEntry } from './ui/wingman-chat.js';
 import './style.css';
 import './ui/wingman-chat.css';
@@ -68,7 +72,7 @@ document.querySelector('#app').innerHTML = `
       <section class="radar-panel" aria-label="Tactical radar"><div class="instrument-title">TAC / RADAR <span>8 KM</span></div><div class="radar-wrap"><canvas id="radar" width="176" height="176" aria-label="Friendly and hostile positions"></canvas></div><div class="radar-caption"><span class="status-dot"></span> PILOT 1 <span>IFF / PIXY CYAN</span></div></section>
       <div class="comms" id="comms"><div class="comms-speaker">${icon('radio', 15)} <span>AWACS <b>EAGLE EYE</b></span><span class="comms-bars"><i></i><i></i><i></i><i></i><i></i></span></div><p id="radio-text">“The coast is clear. The sky is another story.”</p><span class="comms-frequency">CH 01 &nbsp; / &nbsp; 243.00 MHz</span></div>
       <section class="weapons-panel" aria-label="Aircraft and weapons"><div class="instrument-title">F–15C EAGLE <span>PILOT 1</span></div><div class="aircraft-status"><span class="aircraft-silhouette">${icon('plane', 56)}</span><div><div class="airframe-label">AIRFRAME <b id="health-value">100<span>%</span></b></div><div class="health-track"><span id="health-bar"></span></div><span class="airframe-state" id="airframe-state">ALL SYSTEMS NOMINAL</span></div></div><button class="weapon-row selected" id="missile-btn"><span class="weapon-symbol">↗</span><span>MSL <small>STANDARD MISSILE</small></span><strong id="missile-count">32</strong><kbd>1</kbd></button><button class="weapon-row" id="gun-btn"><span class="weapon-symbol gun-symbol">≡</span><span>GUN <small>20 MM CANNON</small></span><strong>∞</strong><kbd>2</kbd></button><div class="flares-row"><span>FLARES <b id="flare-count">06</b></span><button id="flare-btn" title="Deploy flares">DEPLOY <kbd>F</kbd></button></div></section>
-      <div id="wingman-status" class="wingman-status" role="status">PIXY / AWAITING SELECTION</div><div class="flight-data"><span><i class="status-dot"></i> FLIGHT ASSIST <b>ON</b></span><span id="g-force">1.0 G</span><span id="mach">M 0.72</span></div>
+      <div id="wingman-status" class="wingman-status" role="status">PIXY / AWAITING SELECTION</div><div id="pixy-radio" class="pixy-radio" aria-live="polite" hidden></div><div class="wingman-command" role="group" aria-label="Pixy flight command"><span>PIXY ORDER</span><button id="command-attack" type="button" aria-pressed="true">ATTACK <kbd>3</kbd></button><button id="command-regroup" type="button" aria-pressed="false">REGROUP <kbd>4</kbd></button></div><div class="flight-data"><span><i class="status-dot"></i> FLIGHT ASSIST <b>ON</b></span><span id="g-force">1.0 G</span><span id="mach">M 0.72</span></div>
       <div class="touch-controls"><div class="touch-steering"><button data-key="ArrowUp" aria-label="Pitch up">↑</button><button data-key="ArrowLeft" aria-label="Turn left">←</button><button data-key="ArrowDown" aria-label="Pitch down">↓</button><button data-key="ArrowRight" aria-label="Turn right">→</button></div><button id="touch-fire">FIRE</button><button id="touch-target">TARGET</button><button id="touch-lock" aria-label="Request or cancel missile lock" aria-pressed="false">LOCK</button></div>
       <div class="loading-cover" id="loading-cover"><span class="brand-mark">${icon('plane', 42)}</span><span>PREPARING YOUR SORTIE</span><div class="loading-track"><i></i></div></div>
     </section>
@@ -82,6 +86,8 @@ const area = document.querySelector('.game');
 area.tabIndex = -1;
 const audio = new FlightAudio();
 let muted = true;
+audio.setMuted(muted);
+const mumble = createChatMumble(audio);
 let world;
 let renderer;
 try {
@@ -124,21 +130,33 @@ function replaceEncounter(encounter) {
 const director = createRoundDirector(run, replaceEncounter);
 replaceEncounter(getEncounter(DEFAULT_ENCOUNTER_ID));
 
+let pixySubtitleUntil = 0;
+const wingmanRadio = createWingmanRadioDirector({ audio,
+  getContext: () => ({ encounterCategory: run.currentEncounter?.category || 'STANDARD', encounterId: run.currentEncounter?.id || '' }),
+  onLine: ({ subtitle, duration }) => { $('pixy-radio').textContent = `PIXY / ${subtitle}`; $('pixy-radio').hidden = false; pixySubtitleUntil = performance.now() + Math.max(1.5, duration) * 1000; },
+  onStop: () => { $('pixy-radio').hidden = true; pixySubtitleUntil = 0; },
+});
+void wingmanRadio.load();
+
 const chat = createWingmanChat({
   onSend: message => conversation.send(message), onCancel: () => conversation.cancel(),
-  onFocus: () => keys.clear(),
+  onFocus: () => { keys.clear(); void audio.start(); },
+  onWordShown: word => mumble.word(word), onTypingStart: reply => mumble.begin(reply), onTypingCancel: () => mumble.cancel(),
+  onMumbleToggle: enabled => { mumble.setEnabled(enabled); chat.renderMumble(mumble.snapshot()); },
   onExit: () => { keys.clear(); ($('game-dialog').open ? $('dialog-close') : area).focus({ preventScroll: true }); },
 });
 const conversation = createConversation({
   getContext: events => buildWingmanContext({ phase: run.phase, wingman, observer: player.position, enemies, selectedId, events }),
   onChange: state => chat.render(state), onFailure: () => audio.play('radio-static'),
+  onCancel: () => mumble.cancel(),
 });
 $('chat-mount').append(chat.panel);
 function syncConversationScope() {
-  conversation.setScope(`${conversationMode(run.phase)}:${run.round}:${run.phase === Phase.GAME_OVER}`);
+  const scope = `${conversationMode(run.phase)}:${run.round}:${run.phase === Phase.GAME_OVER}`;
+  conversation.setScope(scope);
 }
-function confirmedEvent(type, react = true) {
-  conversation.record(type, { react: react && !!wingman?.alive });
+function confirmedEvent(type) {
+  routeConfirmedEvent(type, conversation, wingmanRadio, !!wingman?.alive);
 }
 
 function resize() {
@@ -186,6 +204,11 @@ function toggleLock() {
   if (mode() !== 'playing') return;
   manualLock.toggle(selectedTarget()); audio.play('click');
 }
+function issueWingmanCommand(command) {
+  if (mode() !== 'playing' || !wingman?.setCommand(command, true)) return false;
+  wingmanRadio.trigger(command === WingmanCommand.ATTACK ? 'command.attack' : 'command.regroup');
+  audio.play('click'); updateUI(); return true;
+}
 function say(text, seconds = 8) { $('radio-text').textContent = `“${text}”`; radioUntil = run.elapsed + seconds; }
 
 function startSortie() {
@@ -213,6 +236,7 @@ async function launchFromHangar(aircraftId) {
       wingman = createWingman(asset, scene, player, world.terrainHeight, {
         hasMissile: target => projectiles.some(p => p.source === 'wingman' && p.target === target),
         fireMissile: (origin, forward, target, damage) => spawnMissile(origin, forward, target, damage, 'wingman'),
+        onMissileFired: () => wingmanRadio.trigger('event.wingmanMissile', { probability: .55, poolCooldownMs: 12000 }),
         fireCannon: (origin, forward) => spawnParticle(origin, forward.clone().multiplyScalar(1300), 0x8fe8ff, .55, .55),
         damageEnemy,
         laserHit: origin => spawnParticle(origin, new THREE.Vector3(0, 2, 0), 0xffb5a1, .25, 2),
@@ -234,6 +258,7 @@ function removeWingman() {
   if (wingman) { wingman.dispose(); disposeAircraft(wingman.mesh); wingman = null; }
 }
 function prepareRound() {
+  wingmanRadio.setContext();
   keys.clear(); selectedId = enemies[0]?.id ?? 0; manualLock.reset();
   threatTime = 0; incoming = 0; incomingWingman = 0; currentWarning = '';
   area.classList.add('is-playing');
@@ -243,7 +268,7 @@ function prepareRound() {
   $('pause-btn').setAttribute('aria-label', 'Pause game');
   say(`Pilot 1, round ${run.round}. ${enemies.length} contacts. You are cleared to engage.`, 10);
   updateUI();
-  conversation.clearEvents(); confirmedEvent('COMBAT_STARTED', false);
+  conversation.clearEvents(); confirmedEvent('COMBAT_STARTED');
   area.focus({ preventScroll: true });
 }
 function continueSortie(encounterId) {
@@ -256,6 +281,7 @@ function clearCombatEffects() {
   projectiles = []; particles = [];
 }
 function resetGame() {
+  wingmanRadio.cancel(); mumble.cancel();
   if (run.round > 0) conversation.reset();
   else { conversation.cancel(); conversation.clearEvents(); }
   player.position.set(0, 460, 1400); Object.assign(player, { heading: 0, pitch: 0, roll: 0, speed: 880, throttle: .64, health: 100, missiles: 32, flares: 6 });
@@ -328,7 +354,7 @@ function destroyEnemy(enemy, source = 'player') {
   const detected = isDetectedHostile(enemy, player.position);
   if (!director.recordDestruction(enemy, source)) return;
   if (source === 'player') confirmedEvent('PLAYER_DESTROYED_TARGET');
-  else if (detected) confirmedEvent('DETECTED_HOSTILE_DESTROYED', false);
+  else { if (detected) conversation.record('DETECTED_HOSTILE_DESTROYED'); if (wingman?.alive) wingmanRadio.trigger('event.wingmanKill'); }
   scene.remove(enemy.mesh);
   audio.play('destroy');
   for (let i = 0; i < 25; i++) spawnParticle(enemy.mesh.position.clone(), new THREE.Vector3((Math.random()-.5)*90,(Math.random()-.3)*70,(Math.random()-.5)*90), i % 3 === 0 ? 0x38494d : 0xffa35b, 1.3+Math.random()*1.4, 1.5+Math.random()*3);
@@ -340,6 +366,7 @@ function finishMission() {
   keys.clear(); incoming = 0; incomingWingman = 0; currentWarning = ''; manualLock.reset(); wingman?.stopCombat();
   clearCombatEffects(); updateUI();
   confirmedEvent('GAME_OVER');
+  mumble.cancel();
   audio.play('warning');
   showDialog('lost');
 }
@@ -348,7 +375,7 @@ function clearRound() {
   clearCombatEffects();
   say(`Round ${run.round} cleared. Stand by for your next engagement.`, 10);
   audio.play('victory'); updateUI();
-  confirmedEvent('COMBAT_ENDED', false);
+  confirmedEvent('COMBAT_ENDED');
 }
 
 function updateFlight(dt) {
@@ -391,7 +418,7 @@ function updateFlight(dt) {
     if (attackWingman || canThreaten(player.position)) {
       threatTime = 0; threatNumber++;
       if (attackWingman) { incomingWingman = 5; say('Pixy, missile inbound. Defensive break.', 6); }
-      else { incoming = 5; say('Missile inbound. Deploy flares!', 6); audio.play('warning'); }
+      else { incoming = 5; wingmanRadio.trigger('event.playerDanger', { poolCooldownMs: 15000 }); say('Missile inbound. Deploy flares!', 6); audio.play('warning'); }
     }
   }
   if (incoming > 0) {
@@ -478,6 +505,11 @@ function updateUI() {
   $('warning').classList.toggle('visible', mode() === 'playing' && !!currentWarning);
   $('wingman-status').textContent = wingman ? `PIXY · ${wingman.alive ? `${Math.ceil(wingman.hp)}/${wingman.definition.maxHP} HP · ${wingman.aiState}` : 'DESTROYED'}${wingman.assetStatus === 'fallback' ? ' · SUBSTITUTE MODEL' : ''}` : 'PIXY · AWAITING SELECTION';
   const lock = manualLock.getSnapshot();
+  for (const [command, id] of [[WingmanCommand.ATTACK, 'command-attack'], [WingmanCommand.REGROUP, 'command-regroup']]) {
+    $(id).setAttribute('aria-pressed', String((wingman?.command || WingmanCommand.ATTACK) === command));
+    $(id).disabled = mode() !== 'playing' || !wingman?.alive;
+  }
+  $('pixy-radio').hidden = performance.now() > pixySubtitleUntil;
   $('touch-lock').textContent = lock.locked ? 'LOCKED' : lock.requested ? 'ACQ' : 'LOCK';
   $('touch-lock').setAttribute('aria-pressed', String(lock.requested));
   $('local-time').textContent = new Date(Date.UTC(2000, 0, 1, 17, 42, 8 + Math.floor(run.elapsed))).toISOString().slice(11,19);
@@ -495,6 +527,7 @@ function frame(now) {
   }
   // Resolve completion after all combat work; never dispose a projectile array mid-update.
   if (director.checkRoundComplete()) clearRound();
+  wingmanRadio.tick(mode() === 'playing' && !!wingman?.alive);
   updateCamera(dt);
   world.update(visualTime, player.position);
   renderer.render(scene, camera);
@@ -507,6 +540,7 @@ updateUI(); updateCamera(.016); requestAnimationFrame(frame);
 requestAnimationFrame(() => { $('loading-cover').classList.add('loaded'); setTimeout(() => $('loading-cover').remove(), 750); });
 
 const controls = [['W / ↑','Pitch up'],['S / ↓','Pitch down'],['A D / ← →','Bank & turn'],['Q / E','Rudder left / right'],['SHIFT','Afterburner'],['B','Air brake'],['SPACE','Fire weapon'],['TAB','Cycle hostile target'],['L','Request / cancel lock'],['V (HOLD)','Rear view'],['1 / 2','Missiles / cannon'],['F','Deploy flares'],['C','Switch camera'],['ESC / P','Pause sortie']];
+controls.splice(12, 0, ['3 / 4', 'Pixy attack / regroup']);
 function showDialog(type) {
   if (activeDialog === type && $('game-dialog').open) return;
   const wasPaused = run.paused;
@@ -565,10 +599,12 @@ $('launch-btn').onclick = startSortie;
 $('help-btn').onclick = () => showDialog('help'); $('all-controls').onclick = () => showDialog('help');
 $('pause-btn').onclick = pauseGame; $('dialog-close').onclick = () => closeDialog();
 $('game-dialog').addEventListener('cancel', (e) => { e.preventDefault(); closeDialog(); });
-$('sound-btn').onclick = async () => { await audio.start(); muted = !muted; audio.setMuted(muted); $('sound-btn').innerHTML = icon(muted ? 'mute' : 'volume'); $('sound-btn').setAttribute('aria-label', muted ? 'Enable sound' : 'Mute sound'); };
+$('sound-btn').onclick = async () => { await audio.start(); muted = !muted; audio.setMuted(muted); if (muted) { mumble.cancel(); wingmanRadio.cancel(); } $('sound-btn').innerHTML = icon(muted ? 'mute' : 'volume'); $('sound-btn').setAttribute('aria-label', muted ? 'Enable sound' : 'Mute sound'); };
 $('fullscreen-btn').onclick = async () => { try { if (!document.fullscreenElement) await document.documentElement.requestFullscreen(); else await document.exitFullscreen(); } catch { say('Fullscreen is unavailable. Your sortie is ready in this window.'); } };
 $('chase-btn').onclick = () => setView('chase'); $('cockpit-btn').onclick = () => setView('cockpit');
 $('missile-btn').onclick = () => setWeapon('MSL'); $('gun-btn').onclick = () => setWeapon('GUN'); $('flare-btn').onclick = deployFlares;
+$('command-attack').onclick = () => issueWingmanCommand(WingmanCommand.ATTACK);
+$('command-regroup').onclick = () => issueWingmanCommand(WingmanCommand.REGROUP);
 window.addEventListener('keydown', (e) => {
   const key = e.key.length === 1 ? e.key.toLowerCase() : e.key;
   if (isTextEntry(e.target) || chat.contains(e.target)) return;
@@ -583,6 +619,8 @@ window.addEventListener('keydown', (e) => {
     if (key === 'c' && !rearView()) setView(view === 'chase' ? 'cockpit' : 'chase');
     if (key === 'l') toggleLock();
     if (key === '1') setWeapon('MSL'); if (key === '2') setWeapon('GUN');
+    if (key === '3') issueWingmanCommand(WingmanCommand.ATTACK);
+    if (key === '4') issueWingmanCommand(WingmanCommand.REGROUP);
     if (key === 'Tab' && mode() === 'playing') cycleTarget();
     if (key === 'f') deployFlares();
   }
@@ -604,7 +642,8 @@ $('touch-lock').onclick = toggleLock;
 // A read-only snapshot helps verify flight controls and mission state in the browser.
 window.__flight = Object.freeze({ getState: () => ({
   ...director.getSnapshot(), mode: mode(), view, weapon, kills: run.totalKills,
-  comms: { available: conversation.snapshot().available, pending: conversation.snapshot().pending, mode: conversationMode(run.phase) },
+  comms: { available: conversation.snapshot().available, pending: conversation.snapshot().pending, mode: conversationMode(run.phase), chatMumble: mumble.snapshot(), wingmanRadio: wingmanRadio.snapshot() },
+  wingmanCommand: wingman?.command || WingmanCommand.ATTACK,
   locked: manualLock.getSnapshot().locked, manualLock: manualLock.getSnapshot(), rearView: rearView(),
   selectedWingmanAircraft: { id: selectedWingmanId, name: getWingmanAircraft(selectedWingmanId).name }, wingman: wingman?.getSnapshot() ?? null,
   target: selectedTarget()?.name, targetId: selectedTarget()?.id,

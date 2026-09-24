@@ -72,27 +72,25 @@ test('duplicate submit, stale completion, failure state and player precedence', 
   broken.setScope('HANGAR'); assert.equal(latest.error, UNAVAILABLE);
 });
 
-test('confirmed event dedup, cooldown, failure backoff and game-over preemption', async () => {
+test('confirmed events remain sanitized context without automatic LLM requests', async () => {
   let time = 0, calls = [], latest;
   const conversation = createConversation({ now: () => time, getContext: events => ({ ...context(), events }),
-    onChange: state => { latest = state; }, request: async payload => { calls.push(payload); return { text: 'Mock reaction.' }; } });
+    onChange: state => { latest = state; }, request: async payload => { calls.push(payload); return { text: 'Mock answer.', mode: 'COMBAT' }; } });
   assert.equal(conversation.record('PLAYER_HIT', { id: 'hit1' }), true);
   await flush();
   assert.equal(conversation.record('PLAYER_HIT', { id: 'hit1' }), false);
-  assert.equal(conversation.record('WINGMAN_HIT', { id: 'hit2' }), false);
-  assert.equal(calls.length, 1);
-  time = 13000;
+  assert.equal(conversation.record('WINGMAN_HIT', { id: 'hit2' }), true);
+  assert.equal(calls.length, 0);
+  time = 19000;
   conversation.record('PLAYER_DESTROYED_TARGET', { id: 'kill1' }); await flush();
-  assert.equal(calls.length, 2); assert.equal(calls[1].event, 'PLAYER_DESTROYED_TARGET');
   conversation.record('GAME_OVER', { id: 'gameover' }); await flush();
-  assert.equal(calls.length, 3); assert.equal(latest.pending, false);
+  assert.equal(calls.length, 0);
+  await conversation.send('What happened?');
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].event, undefined);
+  assert.deepEqual(calls[0].context.events, ['PLAYER_HIT', 'WINGMAN_HIT', 'PLAYER_DESTROYED_TARGET', 'GAME_OVER']);
+  assert.equal(latest.pending, false);
   assert.equal(conversation.record('MADE_UP'), false);
-  let failedCalls = 0;
-  const broken = createConversation({ now: () => time, getContext: context,
-    request: async () => { failedCalls++; throw new Error('offline'); } });
-  broken.record('PLAYER_HIT'); await flush();
-  time += 13000; broken.record('WINGMAN_HIT'); broken.record('GAME_OVER'); await flush();
-  assert.equal(failedCalls, 1);
 });
 
 test('text entries are protected; radio static uses existing mute/device guard', () => {
